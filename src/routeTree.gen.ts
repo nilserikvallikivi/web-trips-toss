@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClubsRouteImport } from './routes/clubs'
@@ -16,6 +17,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClubsClubIdRouteImport } from './routes/clubs.$clubId'
 
+const RankingsRoute = RankingsRouteImport.update({
+  id: '/rankings',
+  path: '/rankings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsRoute = EventsRouteImport.update({
   id: '/events',
   path: '/events',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
+  '/rankings': typeof RankingsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
+  '/rankings': typeof RankingsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
+  '/rankings': typeof RankingsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +89,17 @@ export interface FileRouteTypes {
     | '/clubs'
     | '/dashboard'
     | '/events'
+    | '/rankings'
     | '/clubs/$clubId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/clubs' | '/dashboard' | '/events' | '/clubs/$clubId'
+  to:
+    | '/'
+    | '/auth'
+    | '/clubs'
+    | '/dashboard'
+    | '/events'
+    | '/rankings'
+    | '/clubs/$clubId'
   id:
     | '__root__'
     | '/'
@@ -90,6 +107,7 @@ export interface FileRouteTypes {
     | '/clubs'
     | '/dashboard'
     | '/events'
+    | '/rankings'
     | '/clubs/$clubId'
   fileRoutesById: FileRoutesById
 }
@@ -99,10 +117,18 @@ export interface RootRouteChildren {
   ClubsRoute: typeof ClubsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   EventsRoute: typeof EventsRoute
+  RankingsRoute: typeof RankingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/rankings': {
+      id: '/rankings'
+      path: '/rankings'
+      fullPath: '/rankings'
+      preLoaderRoute: typeof RankingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events': {
       id: '/events'
       path: '/events'
@@ -164,6 +190,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClubsRoute: ClubsRouteWithChildren,
   DashboardRoute: DashboardRoute,
   EventsRoute: EventsRoute,
+  RankingsRoute: RankingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
