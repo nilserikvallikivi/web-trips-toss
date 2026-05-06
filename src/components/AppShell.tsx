@@ -1,13 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, User, UserCircle } from "lucide-react";
+import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, User, UserCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { useIsAdmin } from "@/modules/auth/useIsAdmin";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   const navItems = [
@@ -16,6 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/events", label: t("nav.events"), icon: CalendarDays },
     { to: "/rankings", label: t("nav.rankings"), icon: Trophy },
     { to: "/players", label: t("nav.players"), icon: User },
+    ...(isAdmin ? [{ to: "/admin", label: t("nav.admin"), icon: Shield }] : []),
   ];
 
   const toggleLang = () => i18n.changeLanguage(i18n.language?.startsWith("et") ? "en" : "et");
@@ -70,7 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {user && (
         <nav className="md:hidden fixed bottom-0 inset-x-0 border-t border-border bg-card">
-          <div className="grid grid-cols-5">
+          <div className={`grid ${navItems.length >= 6 ? "grid-cols-6" : "grid-cols-5"}`}>
             {navItems.map((n) => {
               const Icon = n.icon;
               const active = path.startsWith(n.to);
