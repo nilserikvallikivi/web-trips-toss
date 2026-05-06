@@ -17,6 +17,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
 import { Route as ClubsClubIdRouteImport } from './routes/clubs.$clubId'
 
 const RankingsRoute = RankingsRouteImport.update({
@@ -59,6 +60,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsEventIdRoute = EventsEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => EventsRoute,
+} as any)
 const ClubsClubIdRoute = ClubsClubIdRouteImport.update({
   id: '/$clubId',
   path: '/$clubId',
@@ -70,22 +76,24 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/players': typeof PlayersRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/events/$eventId': typeof EventsEventIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/players': typeof PlayersRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/events/$eventId': typeof EventsEventIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,11 +101,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/players': typeof PlayersRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/events/$eventId': typeof EventsEventIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/rankings'
     | '/clubs/$clubId'
+    | '/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/rankings'
     | '/clubs/$clubId'
+    | '/events/$eventId'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/rankings'
     | '/clubs/$clubId'
+    | '/events/$eventId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -140,7 +152,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ClubsRoute: typeof ClubsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
-  EventsRoute: typeof EventsRoute
+  EventsRoute: typeof EventsRouteWithChildren
   PlayersRoute: typeof PlayersRoute
   ProfileRoute: typeof ProfileRoute
   RankingsRoute: typeof RankingsRoute
@@ -204,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events/$eventId': {
+      id: '/events/$eventId'
+      path: '/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof EventsEventIdRouteImport
+      parentRoute: typeof EventsRoute
+    }
     '/clubs/$clubId': {
       id: '/clubs/$clubId'
       path: '/$clubId'
@@ -224,12 +243,23 @@ const ClubsRouteChildren: ClubsRouteChildren = {
 
 const ClubsRouteWithChildren = ClubsRoute._addFileChildren(ClubsRouteChildren)
 
+interface EventsRouteChildren {
+  EventsEventIdRoute: typeof EventsEventIdRoute
+}
+
+const EventsRouteChildren: EventsRouteChildren = {
+  EventsEventIdRoute: EventsEventIdRoute,
+}
+
+const EventsRouteWithChildren =
+  EventsRoute._addFileChildren(EventsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ClubsRoute: ClubsRouteWithChildren,
   DashboardRoute: DashboardRoute,
-  EventsRoute: EventsRoute,
+  EventsRoute: EventsRouteWithChildren,
   PlayersRoute: PlayersRoute,
   ProfileRoute: ProfileRoute,
   RankingsRoute: RankingsRoute,
