@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          new_value: Json | null
+          notes: string | null
+          previous_value: Json | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          previous_value?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          previous_value?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       club_members: {
         Row: {
           club_id: string
@@ -298,6 +334,8 @@ export type Database = {
           full_name: string
           gender: Database["public"]["Enums"]["gender"]
           id: string
+          is_active: boolean
+          last_login_at: string | null
           phone: string | null
           rating_doubles: number
           rating_mixed: number
@@ -312,6 +350,8 @@ export type Database = {
           full_name?: string
           gender?: Database["public"]["Enums"]["gender"]
           id: string
+          is_active?: boolean
+          last_login_at?: string | null
           phone?: string | null
           rating_doubles?: number
           rating_mixed?: number
@@ -326,6 +366,8 @@ export type Database = {
           full_name?: string
           gender?: Database["public"]["Enums"]["gender"]
           id?: string
+          is_active?: boolean
+          last_login_at?: string | null
           phone?: string | null
           rating_doubles?: number
           rating_mixed?: number
@@ -409,6 +451,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_club_admin: {
         Args: { _club_id: string; _user_id: string }
         Returns: boolean
