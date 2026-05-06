@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — AceCourt" }] }),
@@ -36,6 +37,15 @@ function AuthPage() {
     else toast.success(mode === "in" ? t("auth.signedIn") : t("auth.accountCreated"));
   };
 
+  const onGoogle = async () => {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    setBusy(false);
+    if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
+  };
+
   return (
     <AppShell>
       <div className="mx-auto max-w-md py-10">
@@ -61,6 +71,14 @@ function AuthPage() {
             {mode === "in" ? t("auth.signInTitle") : t("auth.signUpTitle")}
           </Button>
         </form>
+        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          <span>or</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={onGoogle}>
+          Continue with Google
+        </Button>
         <button
           type="button"
           className="mt-4 text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
