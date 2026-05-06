@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {user && (
         <nav className="md:hidden fixed bottom-0 inset-x-0 border-t border-border bg-card">
-          <div className="grid grid-cols-4">
+          <div className="grid grid-cols-5">
             {navItems.map((n) => {
               const Icon = n.icon;
               const active = path.startsWith(n.to);
