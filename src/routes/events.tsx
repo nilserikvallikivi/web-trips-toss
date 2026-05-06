@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/events")({
   head: () => ({ meta: [{ title: "Events — AceCourt" }] }),
@@ -114,10 +115,10 @@ function Inner() {
         <div className="space-y-2">
           {events.map((e: any) => (
             <div key={e.id} className="rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-4">
-              <div>
-                <div className="font-medium">{e.title}</div>
-                <div className="text-xs text-muted-foreground">{e.clubs?.name} · {e.event_type} · {e.starts_at ? new Date(e.starts_at).toLocaleString() : "—"}</div>
-              </div>
+              <Link to="/events/$eventId" params={{ eventId: e.id }} className="flex-1 min-w-0">
+                <div className="font-medium truncate">{e.title}</div>
+                <div className="text-xs text-muted-foreground truncate">{e.clubs?.name} · {e.event_type} · {e.starts_at ? new Date(e.starts_at).toLocaleString() : "—"}</div>
+              </Link>
               {regs.has(e.id) ? (
                 <span className="text-xs rounded-md bg-secondary text-secondary-foreground px-2 py-1">{t("events.registered")}</span>
               ) : (

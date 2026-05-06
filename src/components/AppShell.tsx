@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe } from "lucide-react";
+import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, User, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/modules/auth/AuthContext";
 
@@ -15,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/clubs", label: t("nav.clubs"), icon: Users },
     { to: "/events", label: t("nav.events"), icon: CalendarDays },
     { to: "/rankings", label: t("nav.rankings"), icon: Trophy },
+    { to: "/players", label: t("nav.players"), icon: User },
   ];
 
   const toggleLang = () => i18n.changeLanguage(i18n.language?.startsWith("et") ? "en" : "et");
@@ -46,9 +47,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Globe /> {i18n.language?.startsWith("et") ? "ET" : "EN"}
             </Button>
             {user ? (
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
-                <LogOut /> {t("nav.signOut")}
-              </Button>
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/profile"><UserCircle /> {t("nav.profile")}</Link>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => signOut()}>
+                  <LogOut /> {t("nav.signOut")}
+                </Button>
+              </>
             ) : (
               <Button asChild size="sm">
                 <Link to="/auth"><LogIn /> {t("nav.signIn")}</Link>
@@ -64,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {user && (
         <nav className="md:hidden fixed bottom-0 inset-x-0 border-t border-border bg-card">
-          <div className="grid grid-cols-4">
+          <div className="grid grid-cols-5">
             {navItems.map((n) => {
               const Icon = n.icon;
               const active = path.startsWith(n.to);
