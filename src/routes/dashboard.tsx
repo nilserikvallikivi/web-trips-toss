@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Users, CalendarCheck, Swords } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/modules/auth/RequireAuth";
 import { useAuth } from "@/modules/auth/AuthContext";
@@ -34,24 +35,33 @@ function Inner() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">{t("dashboard.welcome")}</h1>
+      <header className="space-y-1">
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{t("dashboard.welcome")}</h1>
         <p className="text-sm text-muted-foreground">{user?.email}</p>
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card label={t("nav.clubs")} value={stats.clubs} to="/clubs" />
-        <Card label={t("dashboard.registrations")} value={stats.regs} to="/events" />
-        <Card label={t("dashboard.upcoming")} value={stats.matches} to="/dashboard" />
+        <Card label={t("nav.clubs")} value={stats.clubs} to="/clubs" icon={Users} />
+        <Card label={t("dashboard.registrations")} value={stats.regs} to="/events" icon={CalendarCheck} />
+        <Card label={t("dashboard.upcoming")} value={stats.matches} to="/dashboard" icon={Swords} />
       </div>
     </div>
   );
 }
 
-function Card({ label, value, to }: { label: string; value: number; to: string }) {
+function Card({ label, value, to, icon: Icon }: { label: string; value: number; to: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <Link to={to} className="rounded-xl border border-border bg-card p-5 hover:bg-accent transition-colors">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-2 text-3xl font-semibold">{value}</div>
+    <Link
+      to={to}
+      className="group rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/30"
+      style={{ boxShadow: "var(--shadow-card)" }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">{label}</div>
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <div className="mt-3 text-3xl font-semibold tracking-tight">{value}</div>
     </Link>
   );
 }
