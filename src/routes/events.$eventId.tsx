@@ -37,7 +37,7 @@ function Inner() {
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("*, clubs:club_id(name)").eq("id", eventId).maybeSingle();
     setEvent(ev);
-    const { data: r } = await supabase.from("event_registrations").select("user_id, status, profiles:user_id(full_name)").eq("event_id", eventId);
+    const { data: r } = await supabase.from("event_registrations").select("user_id, status, profiles:user_id(full_name, gender)").eq("event_id", eventId);
     setRegs(r ?? []);
     const { data: m } = await supabase.from("matches").select("*, p1:player1_id(full_name), p2:player2_id(full_name), p3:player3_id(full_name), p4:player4_id(full_name)").eq("event_id", eventId).order("created_at");
     setMatches(m ?? []);
