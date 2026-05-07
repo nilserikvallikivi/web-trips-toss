@@ -5,11 +5,14 @@ import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, Use
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/modules/auth/AuthContext";
 import { useIsAdmin } from "@/modules/auth/useIsAdmin";
+import { useActiveClub } from "@/modules/clubs/ActiveClubContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation();
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { clubs, activeClubId, setActiveClubId } = useActiveClub();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   const navItems = [
@@ -46,6 +49,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="flex items-center gap-2">
+            {user && clubs.length > 0 && (
+              <Select value={activeClubId ?? undefined} onValueChange={(v) => setActiveClubId(v)}>
+                <SelectTrigger className="h-9 w-[160px] hidden sm:flex" aria-label="Active club">
+                  <SelectValue placeholder="Active club" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubs.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Button variant="ghost" size="sm" onClick={toggleLang} aria-label="Language">
               <Globe /> {i18n.language?.startsWith("et") ? "ET" : "EN"}
             </Button>
