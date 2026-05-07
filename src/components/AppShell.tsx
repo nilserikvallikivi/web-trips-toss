@@ -28,22 +28,24 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="border-b border-border bg-card">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/70">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2 font-semibold">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm">A</span>
+          <Link to="/" className="flex items-center gap-2.5 font-semibold tracking-tight" aria-label={t("app.name")}>
+            <span className="inline-block h-7 w-7 rounded-full tennis-ball-dot ring-1 ring-black/5" aria-hidden />
             <span>{t("app.name")}</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1" aria-label="Main">
             {user && navItems.map((n) => {
-              const active = path.startsWith(n.to);
+              const active = path === n.to || path.startsWith(n.to + "/");
               return (
                 <Link
                   key={n.to}
                   to={n.to}
-                  className={`px-3 py-2 rounded-md text-sm transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative px-3 py-2 rounded-md text-sm transition-colors ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}
                 >
                   {n.label}
+                  {active && <span className="absolute left-3 right-3 -bottom-[13px] h-[2px] rounded-full bg-primary" aria-hidden />}
                 </Link>
               );
             })}
@@ -91,12 +93,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className={`grid ${navItems.length >= 6 ? "grid-cols-6" : "grid-cols-5"}`}>
             {navItems.map((n) => {
               const Icon = n.icon;
-              const active = path.startsWith(n.to);
+              const active = path === n.to || path.startsWith(n.to + "/");
               return (
                 <Link
                   key={n.to}
                   to={n.to}
-                  className={`flex flex-col items-center gap-1 py-2 text-xs ${active ? "text-primary" : "text-muted-foreground"}`}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex flex-col items-center gap-1 py-2.5 text-[11px] min-h-[56px] ${active ? "text-primary" : "text-muted-foreground"}`}
                 >
                   <Icon className="h-5 w-5" />
                   {n.label}
