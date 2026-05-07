@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — AceCourt" }] }),
@@ -50,6 +51,22 @@ function Inner() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(t("profile.saved"));
+  };
+
+  const deactivateMe = async () => {
+    if (!user) return;
+    // Check history
+    const { data: hasHist } = await supabase.rpc("user_has_history", { _user_id: user.id });
+    if (hasHist) {
+      const { error } = await supabase.rpc("anonymize_user", { _user_id: user.id });
+      if (error) return toast.error(error.message);
+      toast.success("Your account has been anonymized. Historical records are preserved.");
+    } else {
+      const { error } = await supabase.from("profiles").update({ is_active: false, deleted_at: new Date().toISOString() }).eq("id", user.id);
+      if (error) return toast.error(error.message);
+      toast.success("Account deactivated.");
+    }
+    await supabase.auth.signOut();
   };
 
   return (
@@ -97,6 +114,32 @@ function Inner() {
         </div>
         <Button type="submit" disabled={busy}>{t("common.save")}</Button>
       </form>
+
+      <div className="rounded-xl border border-destructive/30 bg-card p-6 space-y-3">
+        <h2 className="font-semibold text-destructive">Danger zone</h2>
+        <p className="text-sm text-muted-foreground">
+          Deactivate or delete your account. If you have match, ranking, or registration history,
+          your account will be anonymized — historical records are preserved.
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">Deactivate / Delete my account</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You will be signed out. If you have historical data, your name will be anonymized
+                but match, ranking, and registration history is preserved. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={deactivateMe}>Confirm</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 }
