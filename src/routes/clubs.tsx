@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, MapPin } from "lucide-react";
+import { useIsSuperAdmin } from "@/modules/auth/useIsSuperAdmin";
 
 type Club = { id: string; name: string; description: string | null; location: string | null; privacy: string };
 
@@ -25,13 +26,19 @@ export const Route = createFileRoute("/clubs")({
 function Inner() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", location: "" });
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("clubs").select("id,name,description,location,privacy").order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("clubs")
+      .select("id,name,description,location,privacy")
+      .is("archived_at", null)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
     setClubs((data ?? []) as Club[]);
   };
   useEffect(() => { load(); }, []);
@@ -54,6 +61,7 @@ function Inner() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{t("clubs.title")}</h1>
+        {isSuperAdmin ? (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus /> {t("clubs.create")}</Button></DialogTrigger>
           <DialogContent>
@@ -75,6 +83,9 @@ function Inner() {
             </form>
           </DialogContent>
         </Dialog>
+        ) : (
+          <span className="text-xs text-muted-foreground">Only Super Admins can create clubs</span>
+        )}
       </div>
 
       {clubs.length === 0 ? (

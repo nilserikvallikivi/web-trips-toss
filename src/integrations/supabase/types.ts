@@ -84,8 +84,10 @@ export type Database = {
       }
       clubs: {
         Row: {
+          archived_at: string | null
           created_at: string
           created_by: string
+          deleted_at: string | null
           description: string | null
           id: string
           location: string | null
@@ -94,8 +96,10 @@ export type Database = {
           privacy: Database["public"]["Enums"]["club_privacy"]
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           created_by: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           location?: string | null
@@ -104,8 +108,10 @@ export type Database = {
           privacy?: Database["public"]["Enums"]["club_privacy"]
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           location?: string | null
@@ -191,10 +197,12 @@ export type Database = {
       events: {
         Row: {
           allow_waitlist: boolean
+          archived_at: string | null
           auto_approve: boolean
           club_id: string
           created_at: string
           created_by: string
+          deleted_at: string | null
           description: string | null
           discipline: Database["public"]["Enums"]["discipline"]
           ends_at: string | null
@@ -209,10 +217,12 @@ export type Database = {
         }
         Insert: {
           allow_waitlist?: boolean
+          archived_at?: string | null
           auto_approve?: boolean
           club_id: string
           created_at?: string
           created_by: string
+          deleted_at?: string | null
           description?: string | null
           discipline?: Database["public"]["Enums"]["discipline"]
           ends_at?: string | null
@@ -227,10 +237,12 @@ export type Database = {
         }
         Update: {
           allow_waitlist?: boolean
+          archived_at?: string | null
           auto_approve?: boolean
           club_id?: string
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
           description?: string | null
           discipline?: Database["public"]["Enums"]["discipline"]
           ends_at?: string | null
@@ -328,8 +340,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          anonymized_at: string | null
           avatar_url: string | null
           created_at: string
+          deleted_at: string | null
           dominant_hand: string | null
           full_name: string
           gender: Database["public"]["Enums"]["gender"]
@@ -344,8 +358,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          anonymized_at?: string | null
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           dominant_hand?: string | null
           full_name?: string
           gender?: Database["public"]["Enums"]["gender"]
@@ -360,8 +376,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          anonymized_at?: string | null
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           dominant_hand?: string | null
           full_name?: string
           gender?: Database["public"]["Enums"]["gender"]
@@ -444,6 +462,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anonymize_user: { Args: { _user_id: string }; Returns: undefined }
+      club_has_history: { Args: { _club_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -460,6 +480,7 @@ export type Database = {
         Args: { _club_id: string; _user_id: string }
         Returns: boolean
       }
+      user_has_history: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "club_admin" | "organizer" | "player"

@@ -37,7 +37,7 @@ function Inner() {
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("*, clubs:club_id(name)").eq("id", eventId).maybeSingle();
     setEvent(ev);
-    const { data: r } = await supabase.from("event_registrations").select("user_id, status, profiles:user_id(full_name)").eq("event_id", eventId);
+    const { data: r } = await supabase.from("event_registrations").select("user_id, status, profiles:user_id(full_name, gender)").eq("event_id", eventId);
     setRegs(r ?? []);
     const { data: m } = await supabase.from("matches").select("*, p1:player1_id(full_name), p2:player2_id(full_name), p3:player3_id(full_name), p4:player4_id(full_name)").eq("event_id", eventId).order("created_at");
     setMatches(m ?? []);
@@ -50,10 +50,33 @@ function Inner() {
 
   const generate = async () => {
     if (!event) return;
-    const players = regs.filter(r => r.status === "approved").map(r => r.user_id);
-    if (players.length < 2) return toast.error("Need at least 2 approved players");
-    const shuffled = shuffle(players);
+    const approved = regs.filter((r: any) => r.status === "approved");
     const isDoubles = event.discipline === "doubles" || event.discipline === "mixed";
+    const isMixed = event.discipline === "mixed";
+
+    if (!isDoubles && approved.length < 2) {
+      return toast.error("Singles requires a minimum of 2 approved players.");
+    }
+    if (isDoubles && approved.length < 4) {
+      return toast.error("Doubles requires a minimum of 4 approved players.");
+    }
+    if (isDoubles && approved.length % 2 !== 0) {
+      return toast.error("Doubles requires an even number of players.");
+    }
+    if (isMixed) {
+      const males = approved.filter((r: any) => r.profiles?.gender === "male").length;
+      const females = approved.filter((r: any) => r.profiles?.gender === "female").length;
+      const unspecified = approved.length - males - females;
+      const pairs = approved.length / 2;
+      if (males < pairs || females < pairs) {
+        return toast.error("Mixed doubles M+N requires one male and one female per pair. Current player selection does not allow valid pairs.");
+      }
+      if (unspecified > 0) {
+        toast.warning(`${unspecified} player(s) have unspecified gender — pairs may be inaccurate.`);
+      }
+    }
+    const players = approved.map((r: any) => r.user_id);
+    const shuffled = shuffle(players);
     const rows: any[] = [];
     if (isDoubles) {
       for (let i = 0; i + 3 < shuffled.length; i += 4) {

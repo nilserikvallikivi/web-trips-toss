@@ -46,6 +46,15 @@ function AuthPage() {
     if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
   };
 
+  const onApple = async () => {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: window.location.origin,
+    });
+    setBusy(false);
+    if (result.error) toast.error(result.error.message ?? "Apple sign-in failed");
+  };
+
   return (
     <AppShell>
       <div className="mx-auto max-w-md py-10">
@@ -76,9 +85,14 @@ function AuthPage() {
           <span>or</span>
           <div className="h-px flex-1 bg-border" />
         </div>
-        <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={onGoogle}>
-          Continue with Google
-        </Button>
+        <div className="space-y-2">
+          <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={onGoogle}>
+            Continue with Google
+          </Button>
+          <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={onApple}>
+            Continue with Apple
+          </Button>
+        </div>
         <button
           type="button"
           className="mt-4 text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
