@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/modules/auth/RequireAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { PresenceDot } from "@/components/PresenceDot";
 
 export const Route = createFileRoute("/players")({
   head: () => ({ meta: [{ title: "Players — AceCourt" }] }),
@@ -37,7 +38,10 @@ function Inner() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((p) => (
             <div key={p.id} className="rounded-lg border border-border bg-card p-4">
-              <div className="font-medium">{p.full_name || "—"}</div>
+              <div className="font-medium flex items-center gap-2">
+                <PresenceDot userId={p.id} />
+                <span>{p.full_name || "—"}</span>
+              </div>
               <div className="text-xs text-muted-foreground mt-1">{p.skill_level} · S {Math.round(p.rating_singles)} · D {Math.round(p.rating_doubles)}</div>
             </div>
           ))}
