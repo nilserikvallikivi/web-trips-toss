@@ -3,6 +3,8 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/modules/auth/AuthContext";
 import { ActiveClubProvider } from "@/modules/clubs/ActiveClubContext";
+import { PresenceProvider } from "@/modules/presence/PresenceProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import "@/lib/i18n";
 
@@ -72,8 +74,12 @@ function RootComponent() {
   return (
     <AuthProvider>
       <ActiveClubProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
+        <PresenceProvider>
+          <TooltipProvider delayDuration={150}>
+            <Outlet />
+            <Toaster richColors position="top-right" />
+          </TooltipProvider>
+        </PresenceProvider>
       </ActiveClubProvider>
     </AuthProvider>
   );

@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PlayersRouteImport } from './routes/players'
+import { Route as FeedbackRouteImport } from './routes/feedback'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClubsRouteImport } from './routes/clubs'
@@ -21,6 +23,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
 import { Route as ClubsClubIdRouteImport } from './routes/clubs.$clubId'
 
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RankingsRoute = RankingsRouteImport.update({
   id: '/rankings',
   path: '/rankings',
@@ -34,6 +41,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PlayersRoute = PlayersRouteImport.update({
   id: '/players',
   path: '/players',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedbackRoute = FeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -84,9 +96,11 @@ export interface FileRoutesByFullPath {
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRouteWithChildren
+  '/feedback': typeof FeedbackRoute
   '/players': typeof PlayersRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
+  '/reports': typeof ReportsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
 }
@@ -97,9 +111,11 @@ export interface FileRoutesByTo {
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRouteWithChildren
+  '/feedback': typeof FeedbackRoute
   '/players': typeof PlayersRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
+  '/reports': typeof ReportsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
 }
@@ -111,9 +127,11 @@ export interface FileRoutesById {
   '/clubs': typeof ClubsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRouteWithChildren
+  '/feedback': typeof FeedbackRoute
   '/players': typeof PlayersRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
+  '/reports': typeof ReportsRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
 }
@@ -126,9 +144,11 @@ export interface FileRouteTypes {
     | '/clubs'
     | '/dashboard'
     | '/events'
+    | '/feedback'
     | '/players'
     | '/profile'
     | '/rankings'
+    | '/reports'
     | '/clubs/$clubId'
     | '/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
@@ -139,9 +159,11 @@ export interface FileRouteTypes {
     | '/clubs'
     | '/dashboard'
     | '/events'
+    | '/feedback'
     | '/players'
     | '/profile'
     | '/rankings'
+    | '/reports'
     | '/clubs/$clubId'
     | '/events/$eventId'
   id:
@@ -152,9 +174,11 @@ export interface FileRouteTypes {
     | '/clubs'
     | '/dashboard'
     | '/events'
+    | '/feedback'
     | '/players'
     | '/profile'
     | '/rankings'
+    | '/reports'
     | '/clubs/$clubId'
     | '/events/$eventId'
   fileRoutesById: FileRoutesById
@@ -166,13 +190,22 @@ export interface RootRouteChildren {
   ClubsRoute: typeof ClubsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   EventsRoute: typeof EventsRouteWithChildren
+  FeedbackRoute: typeof FeedbackRoute
   PlayersRoute: typeof PlayersRoute
   ProfileRoute: typeof ProfileRoute
   RankingsRoute: typeof RankingsRoute
+  ReportsRoute: typeof ReportsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rankings': {
       id: '/rankings'
       path: '/rankings'
@@ -192,6 +225,13 @@ declare module '@tanstack/react-router' {
       path: '/players'
       fullPath: '/players'
       preLoaderRoute: typeof PlayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feedback': {
+      id: '/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof FeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -281,9 +321,11 @@ const rootRouteChildren: RootRouteChildren = {
   ClubsRoute: ClubsRouteWithChildren,
   DashboardRoute: DashboardRoute,
   EventsRoute: EventsRouteWithChildren,
+  FeedbackRoute: FeedbackRoute,
   PlayersRoute: PlayersRoute,
   ProfileRoute: ProfileRoute,
   RankingsRoute: RankingsRoute,
+  ReportsRoute: ReportsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

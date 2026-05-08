@@ -5,6 +5,9 @@ import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/modules/auth/RequireAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { PresenceDot } from "@/components/PresenceDot";
+import { ReportUserDialog } from "@/components/ReportUserDialog";
+import { useAuth } from "@/modules/auth/AuthContext";
 
 export const Route = createFileRoute("/players")({
   head: () => ({ meta: [{ title: "Players — AceCourt" }] }),
@@ -13,6 +16,7 @@ export const Route = createFileRoute("/players")({
 
 function Inner() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [rows, setRows] = useState<any[]>([]);
   const [q, setQ] = useState("");
 
@@ -37,7 +41,13 @@ function Inner() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((p) => (
             <div key={p.id} className="rounded-lg border border-border bg-card p-4">
-              <div className="font-medium">{p.full_name || "—"}</div>
+              <div className="font-medium flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 min-w-0">
+                  <PresenceDot userId={p.id} />
+                  <span className="truncate">{p.full_name || "—"}</span>
+                </span>
+                {user && user.id !== p.id && <ReportUserDialog targetUserId={p.id} targetName={p.full_name} />}
+              </div>
               <div className="text-xs text-muted-foreground mt-1">{p.skill_level} · S {Math.round(p.rating_singles)} · D {Math.round(p.rating_doubles)}</div>
             </div>
           ))}

@@ -21,6 +21,7 @@ function Inner() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [form, setForm] = useState({ full_name: "", phone: "", gender: "unspecified", skill_level: "beginner", dominant_hand: "" });
+  const [visibility, setVisibility] = useState<string>("everyone");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -34,6 +35,8 @@ function Inner() {
         skill_level: data.skill_level ?? "beginner",
         dominant_hand: data.dominant_hand ?? "",
       });
+      const { data: pv } = await ((supabase as any).from("presence_privacy_settings").select("visibility").eq("user_id", user.id).maybeSingle());
+      if (pv?.visibility) setVisibility(pv.visibility as string);
     })();
   }, [user?.id]);
 
@@ -51,6 +54,13 @@ function Inner() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(t("profile.saved"));
+  };
+
+  const savePresencePrivacy = async (v: string) => {
+    if (!user) return;
+    setVisibility(v);
+    await ((supabase as any).from("presence_privacy_settings").upsert({ user_id: user.id, visibility: v, updated_at: new Date().toISOString() }));
+    toast.success("Presence privacy updated");
   };
 
   const deactivateMe = async () => {
@@ -114,6 +124,19 @@ function Inner() {
         </div>
         <Button type="submit" disabled={busy}>{t("common.save")}</Button>
       </form>
+
+      <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+        <h2 className="font-semibold">Online presence</h2>
+        <p className="text-sm text-muted-foreground">Choose who can see when you are online.</p>
+        <Select value={visibility} onValueChange={savePresencePrivacy}>
+          <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="everyone">Everyone in my clubs</SelectItem>
+            <SelectItem value="admins_only">Admins and organizers only</SelectItem>
+            <SelectItem value="hidden">Hidden</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="rounded-xl border border-destructive/30 bg-card p-6 space-y-3">
         <h2 className="font-semibold text-destructive">Danger zone</h2>

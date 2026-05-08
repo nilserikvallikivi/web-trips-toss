@@ -1,11 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, User, UserCircle, Shield } from "lucide-react";
+import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, User, UserCircle, Shield, Circle, MessageSquare, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/modules/auth/AuthContext";
 import { useIsAdmin } from "@/modules/auth/useIsAdmin";
 import { useActiveClub } from "@/modules/clubs/ActiveClubContext";
+import { usePresence } from "@/modules/presence/PresenceProvider";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -13,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
   const { clubs, activeClubId, setActiveClubId } = useActiveClub();
+  const { onlineCount } = usePresence();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   const navItems = [
@@ -22,6 +25,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/rankings", label: t("nav.rankings"), icon: Trophy },
     { to: "/players", label: t("nav.players"), icon: User },
     ...(isAdmin ? [{ to: "/admin", label: t("nav.admin"), icon: Shield }] : []),
+    ...(isAdmin ? [{ to: "/reports", label: "Reports", icon: Flag }] : []),
+    ...(isAdmin ? [{ to: "/feedback", label: "Feedback", icon: MessageSquare }] : []),
   ];
 
   const toggleLang = () => i18n.changeLanguage(i18n.language?.startsWith("et") ? "en" : "et");
@@ -51,6 +56,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="flex items-center gap-2">
+            {user && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-xs text-muted-foreground" aria-label={`${onlineCount()} users online`}>
+                    <Circle className="h-2 w-2 fill-emerald-500 text-emerald-500" aria-hidden />
+                    {onlineCount()} online
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{onlineCount()} users currently online</TooltipContent>
+              </Tooltip>
+            )}
             {user && clubs.length > 0 && (
               <Select value={activeClubId ?? undefined} onValueChange={(v) => setActiveClubId(v)}>
                 <SelectTrigger className="h-9 w-[160px] hidden sm:flex" aria-label="Active club">
