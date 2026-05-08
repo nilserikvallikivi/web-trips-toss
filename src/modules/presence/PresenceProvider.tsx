@@ -52,7 +52,7 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
     if (!user) { setPresence({}); return; }
     let active = true;
     (async () => {
-      const { data } = await (supabase.from("user_presence" as any).select("user_id,status,last_seen_at"));
+      const { data } = await ((supabase as any).from("user_presence").select("user_id,status,last_seen_at"));
       if (!active || !data) return;
       const map: Record<string, PresenceRow> = {};
       for (const r of data as any[]) map[r.user_id] = r;
