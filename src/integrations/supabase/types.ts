@@ -50,6 +50,51 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_feedback: {
+        Row: {
+          affected_module: string | null
+          attachment_url: string | null
+          category: Database["public"]["Enums"]["feedback_category"]
+          club_id: string | null
+          created_at: string
+          description: string
+          id: string
+          priority: Database["public"]["Enums"]["feedback_priority"]
+          status: Database["public"]["Enums"]["feedback_status"]
+          submitted_by: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_module?: string | null
+          attachment_url?: string | null
+          category?: Database["public"]["Enums"]["feedback_category"]
+          club_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          status?: Database["public"]["Enums"]["feedback_status"]
+          submitted_by: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_module?: string | null
+          attachment_url?: string | null
+          category?: Database["public"]["Enums"]["feedback_category"]
+          club_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          status?: Database["public"]["Enums"]["feedback_status"]
+          submitted_by?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       club_members: {
         Row: {
           club_id: string
@@ -265,9 +310,81 @@ export type Database = {
           },
         ]
       }
+      feedback_comments: {
+        Row: {
+          author_id: string
+          comment: string
+          created_at: string
+          feedback_id: string
+          id: string
+          internal: boolean
+        }
+        Insert: {
+          author_id: string
+          comment: string
+          created_at?: string
+          feedback_id: string
+          id?: string
+          internal?: boolean
+        }
+        Update: {
+          author_id?: string
+          comment?: string
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          internal?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_comments_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "admin_feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_status_history: {
+        Row: {
+          changed_by: string
+          created_at: string
+          feedback_id: string
+          id: string
+          new_status: Database["public"]["Enums"]["feedback_status"]
+          old_status: Database["public"]["Enums"]["feedback_status"] | null
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          feedback_id: string
+          id?: string
+          new_status: Database["public"]["Enums"]["feedback_status"]
+          old_status?: Database["public"]["Enums"]["feedback_status"] | null
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["feedback_status"]
+          old_status?: Database["public"]["Enums"]["feedback_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_status_history_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "admin_feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           club_id: string
+          confirmed: boolean
+          confirmed_at: string | null
           court_id: string | null
           created_at: string
           event_id: string | null
@@ -284,6 +401,8 @@ export type Database = {
         }
         Insert: {
           club_id: string
+          confirmed?: boolean
+          confirmed_at?: string | null
           court_id?: string | null
           created_at?: string
           event_id?: string | null
@@ -300,6 +419,8 @@ export type Database = {
         }
         Update: {
           club_id?: string
+          confirmed?: boolean
+          confirmed_at?: string | null
           court_id?: string | null
           created_at?: string
           event_id?: string | null
@@ -337,6 +458,90 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_statistics: {
+        Row: {
+          club_id: string | null
+          current_streak: number
+          discipline: Database["public"]["Enums"]["discipline"]
+          games_lost: number
+          games_won: number
+          id: string
+          last_match_at: string | null
+          longest_streak: number
+          losses: number
+          matches_played: number
+          retired_matches: number
+          scope: string
+          sets_lost: number
+          sets_won: number
+          updated_at: string
+          user_id: string
+          walkovers_lost: number
+          walkovers_won: number
+          wins: number
+        }
+        Insert: {
+          club_id?: string | null
+          current_streak?: number
+          discipline: Database["public"]["Enums"]["discipline"]
+          games_lost?: number
+          games_won?: number
+          id?: string
+          last_match_at?: string | null
+          longest_streak?: number
+          losses?: number
+          matches_played?: number
+          retired_matches?: number
+          scope?: string
+          sets_lost?: number
+          sets_won?: number
+          updated_at?: string
+          user_id: string
+          walkovers_lost?: number
+          walkovers_won?: number
+          wins?: number
+        }
+        Update: {
+          club_id?: string | null
+          current_streak?: number
+          discipline?: Database["public"]["Enums"]["discipline"]
+          games_lost?: number
+          games_won?: number
+          id?: string
+          last_match_at?: string | null
+          longest_streak?: number
+          losses?: number
+          matches_played?: number
+          retired_matches?: number
+          scope?: string
+          sets_lost?: number
+          sets_won?: number
+          updated_at?: string
+          user_id?: string
+          walkovers_lost?: number
+          walkovers_won?: number
+          wins?: number
+        }
+        Relationships: []
+      }
+      presence_privacy_settings: {
+        Row: {
+          updated_at: string
+          user_id: string
+          visibility: Database["public"]["Enums"]["presence_visibility"]
+        }
+        Insert: {
+          updated_at?: string
+          user_id: string
+          visibility?: Database["public"]["Enums"]["presence_visibility"]
+        }
+        Update: {
+          updated_at?: string
+          user_id?: string
+          visibility?: Database["public"]["Enums"]["presence_visibility"]
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -439,6 +644,170 @@ export type Database = {
           },
         ]
       }
+      rating_history: {
+        Row: {
+          club_id: string | null
+          created_at: string
+          delta: number
+          discipline: Database["public"]["Enums"]["discipline"]
+          id: string
+          k_factor: number
+          match_id: string | null
+          new_rating: number
+          old_rating: number
+          reason: string | null
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          club_id?: string | null
+          created_at?: string
+          delta: number
+          discipline: Database["public"]["Enums"]["discipline"]
+          id?: string
+          k_factor?: number
+          match_id?: string | null
+          new_rating: number
+          old_rating: number
+          reason?: string | null
+          scope?: string
+          user_id: string
+        }
+        Update: {
+          club_id?: string | null
+          created_at?: string
+          delta?: number
+          discipline?: Database["public"]["Enums"]["discipline"]
+          id?: string
+          k_factor?: number
+          match_id?: string | null
+          new_rating?: number
+          old_rating?: number
+          reason?: string | null
+          scope?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      report_actions: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          report_id: string
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          report_id: string
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_actions_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "user_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_avoidance_preferences: {
+        Row: {
+          avoided_user_id: string
+          created_at: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          avoided_user_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          avoided_user_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          last_seen_at: string
+          status: Database["public"]["Enums"]["presence_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          status?: Database["public"]["Enums"]["presence_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          status?: Database["public"]["Enums"]["presence_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_reports: {
+        Row: {
+          admin_notes: string | null
+          club_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reported_user_id: string
+          reporter_id: string
+          status: Database["public"]["Enums"]["report_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          club_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reported_user_id: string
+          reporter_id: string
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          club_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: Database["public"]["Enums"]["report_reason"]
+          reported_user_id?: string
+          reporter_id?: string
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -463,6 +832,7 @@ export type Database = {
     }
     Functions: {
       anonymize_user: { Args: { _user_id: string }; Returns: undefined }
+      can_view_presence: { Args: { _target: string }; Returns: boolean }
       club_has_history: { Args: { _club_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -480,6 +850,8 @@ export type Database = {
         Args: { _club_id: string; _user_id: string }
         Returns: boolean
       }
+      presence_heartbeat: { Args: never; Returns: undefined }
+      presence_set_offline: { Args: never; Returns: undefined }
       user_has_history: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
@@ -507,6 +879,25 @@ export type Database = {
         | "training"
         | "rotating_doubles"
         | "custom"
+      feedback_category:
+        | "bug"
+        | "feature_request"
+        | "ux"
+        | "ranking"
+        | "registration"
+        | "scheduling"
+        | "scoring"
+        | "club_mgmt"
+        | "moderation"
+        | "other"
+      feedback_priority: "low" | "medium" | "high" | "critical"
+      feedback_status:
+        | "submitted"
+        | "under_review"
+        | "planned"
+        | "in_progress"
+        | "released"
+        | "rejected"
       gender: "male" | "female" | "other" | "unspecified"
       match_status:
         | "scheduled"
@@ -515,12 +906,31 @@ export type Database = {
         | "cancelled"
         | "walkover"
         | "retired"
+      presence_status: "online" | "idle" | "offline"
+      presence_visibility: "everyone" | "admins_only" | "hidden"
       registration_status:
         | "pending"
         | "approved"
         | "rejected"
         | "waitlist"
         | "cancelled"
+      report_reason:
+        | "bad_behavior"
+        | "abusive_language"
+        | "no_show"
+        | "repeated_cancellations"
+        | "false_score"
+        | "unfair_play"
+        | "harassment"
+        | "safety_concern"
+        | "do_not_recommend"
+        | "other"
+      report_status:
+        | "new"
+        | "under_review"
+        | "resolved"
+        | "dismissed"
+        | "malicious"
       skill_level: "beginner" | "intermediate" | "advanced" | "league"
     }
     CompositeTypes: {
@@ -675,6 +1085,27 @@ export const Constants = {
         "rotating_doubles",
         "custom",
       ],
+      feedback_category: [
+        "bug",
+        "feature_request",
+        "ux",
+        "ranking",
+        "registration",
+        "scheduling",
+        "scoring",
+        "club_mgmt",
+        "moderation",
+        "other",
+      ],
+      feedback_priority: ["low", "medium", "high", "critical"],
+      feedback_status: [
+        "submitted",
+        "under_review",
+        "planned",
+        "in_progress",
+        "released",
+        "rejected",
+      ],
       gender: ["male", "female", "other", "unspecified"],
       match_status: [
         "scheduled",
@@ -684,12 +1115,33 @@ export const Constants = {
         "walkover",
         "retired",
       ],
+      presence_status: ["online", "idle", "offline"],
+      presence_visibility: ["everyone", "admins_only", "hidden"],
       registration_status: [
         "pending",
         "approved",
         "rejected",
         "waitlist",
         "cancelled",
+      ],
+      report_reason: [
+        "bad_behavior",
+        "abusive_language",
+        "no_show",
+        "repeated_cancellations",
+        "false_score",
+        "unfair_play",
+        "harassment",
+        "safety_concern",
+        "do_not_recommend",
+        "other",
+      ],
+      report_status: [
+        "new",
+        "under_review",
+        "resolved",
+        "dismissed",
+        "malicious",
       ],
       skill_level: ["beginner", "intermediate", "advanced", "league"],
     },
