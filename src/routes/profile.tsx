@@ -35,8 +35,8 @@ function Inner() {
         skill_level: data.skill_level ?? "beginner",
         dominant_hand: data.dominant_hand ?? "",
       });
-      const { data: pv } = await (supabase.from("presence_privacy_settings" as any).select("visibility").eq("user_id", user.id).maybeSingle());
-      if (pv?.visibility) setVisibility(pv.visibility);
+      const { data: pv } = await ((supabase as any).from("presence_privacy_settings").select("visibility").eq("user_id", user.id).maybeSingle());
+      if (pv?.visibility) setVisibility(pv.visibility as string);
     })();
   }, [user?.id]);
 
@@ -59,7 +59,7 @@ function Inner() {
   const savePresencePrivacy = async (v: string) => {
     if (!user) return;
     setVisibility(v);
-    await (supabase.from("presence_privacy_settings" as any).upsert({ user_id: user.id, visibility: v, updated_at: new Date().toISOString() }));
+    await ((supabase as any).from("presence_privacy_settings").upsert({ user_id: user.id, visibility: v, updated_at: new Date().toISOString() }));
     toast.success("Presence privacy updated");
   };
 
