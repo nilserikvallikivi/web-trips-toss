@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, User, UserCircle, Shield, Circle, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, Trophy, CalendarDays, LogOut, LogIn, Globe, User, UserCircle, Shield, Circle, MessageSquare, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/modules/auth/AuthContext";
 import { useIsAdmin } from "@/modules/auth/useIsAdmin";
@@ -25,6 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/rankings", label: t("nav.rankings"), icon: Trophy },
     { to: "/players", label: t("nav.players"), icon: User },
     ...(isAdmin ? [{ to: "/admin", label: t("nav.admin"), icon: Shield }] : []),
+    ...(isAdmin ? [{ to: "/reports", label: "Reports", icon: Flag }] : []),
     ...(isAdmin ? [{ to: "/feedback", label: "Feedback", icon: MessageSquare }] : []),
   ];
 
