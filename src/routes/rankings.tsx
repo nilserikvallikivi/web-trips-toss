@@ -17,7 +17,7 @@ export const Route = createFileRoute("/rankings")({
 
 function Inner() {
   const { t } = useTranslation();
-  const { clubs, activeClubId } = useActiveClub();
+  const { activeClubId } = useActiveClub();
   const [scope, setScope] = useState<"all" | "club">("all");
   const [discipline, setDiscipline] = useState<string>("all");
   const [minMatches, setMinMatches] = useState<number>(0);
