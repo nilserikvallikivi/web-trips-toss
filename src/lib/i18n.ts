@@ -74,6 +74,8 @@ const resources = {
         when: "When",
         deadline: "Registration deadline",
         max: "Max participants",
+        unregister: "Unregister",
+        unregistered: "Registration cancelled",
       },
       matches: {
         title: "Matches",
@@ -195,6 +197,8 @@ const resources = {
         when: "Millal",
         deadline: "Registreerimise tähtaeg",
         max: "Max osalejaid",
+        unregister: "Tühista",
+        unregistered: "Registreering tühistatud",
       },
       matches: {
         title: "Mängud",
