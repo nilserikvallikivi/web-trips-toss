@@ -9,6 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Shuffle } from "lucide-react";
 
 export const Route = createFileRoute("/events/$eventId")({
@@ -35,6 +39,8 @@ function Inner() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [rounds, setRounds] = useState(4);
   const [courts, setCourts] = useState(2);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ title: "", starts_at: "", status: "" });
 
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("*, clubs:club_id(name)").eq("id", eventId).maybeSingle();
@@ -227,6 +233,27 @@ function Inner() {
     load();
   };
 
+  const updateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from("events").update({
+      title: editForm.title,
+      starts_at: editForm.starts_at || null,
+      status: editForm.status as any,
+    }).eq("id", eventId);
+    if (error) return toast.error(error.message);
+    toast.success("Event updated");
+    setEditOpen(false);
+    load();
+  };
+
+  const deleteEvent = async () => {
+    if (!confirm("Delete this event?")) return;
+    const { error } = await supabase.from("events").delete().eq("id", eventId);
+    if (error) return toast.error(error.message);
+    toast.success("Event deleted");
+    window.history.back();
+  };
+
   if (!event) return <div className="text-muted-foreground">{t("common.loading")}</div>;
 
   return (
@@ -235,6 +262,44 @@ function Inner() {
         <Link to="/events" className="text-sm text-muted-foreground hover:text-foreground">← {t("common.back")}</Link>
         <h1 className="text-2xl font-semibold mt-1">{event.title}</h1>
         <p className="text-sm text-muted-foreground">{event.clubs?.name} · {event.event_type} · {event.discipline}</p>
+        {isAdmin && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Dialog open={editOpen} onOpenChange={(o) => {
+              setEditOpen(o);
+              if (o) setEditForm({ title: event.title, starts_at: event.starts_at?.slice(0, 16) ?? "", status: event.status });
+            }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">Edit event</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Edit event</DialogTitle></DialogHeader>
+                <form onSubmit={updateEvent} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date & time</Label>
+                    <Input type="datetime-local" value={editForm.starts_at} onChange={(e) => setEditForm({ ...editForm, starts_at: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["draft", "published", "registration_open", "registration_closed", "in_progress", "completed", "cancelled"].map((s) => (
+                          <SelectItem key={s} value={s}>{s.replaceAll("_", " ")}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="w-full">Save</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Button size="sm" variant="destructive" onClick={deleteEvent}>Delete event</Button>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="players">
@@ -246,7 +311,7 @@ function Inner() {
           {regs.length === 0 ? <div className="text-sm text-muted-foreground">{t("dashboard.none")}</div> : regs.map((r: any) => (
             <div key={r.user_id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between">
               <span>{r.profiles?.full_name || "—"}</span>
-              <span className="text-xs text-muted-foreground">{r.status}</span>
+              <Badge variant={r.status === "approved" ? "default" : r.status === "waitlist" ? "secondary" : "outline"}>{r.status}</Badge>
             </div>
           ))}
         </TabsContent>
