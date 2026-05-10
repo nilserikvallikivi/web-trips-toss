@@ -261,7 +261,10 @@ function Inner() {
       <div>
         <Link to="/events" className="text-sm text-muted-foreground hover:text-foreground">← {t("common.back")}</Link>
         <h1 className="text-2xl font-semibold mt-1">{event.title}</h1>
-        <p className="text-sm text-muted-foreground">{event.clubs?.name} · {event.event_type} · {event.discipline}</p>
+        <p className="text-sm text-muted-foreground">
+          <Link to="/clubs/$clubId" params={{ clubId: event.club_id }} className="hover:underline">{event.clubs?.name}</Link>
+          {" · "}{event.event_type}{" · "}{event.discipline}
+        </p>
         {isAdmin && (
           <div className="mt-3 flex flex-wrap gap-2">
             <Dialog open={editOpen} onOpenChange={(o) => {
