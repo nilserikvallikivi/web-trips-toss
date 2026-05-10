@@ -29,16 +29,31 @@ function Inner() {
   const [isMember, setIsMember] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [courtForm, setCourtForm] = useState({ name: "", surface: "", indoor: false });
+  const [presenceMap, setPresenceMap] = useState<Record<string, string>>({});
 
   const load = async () => {
     const [c, m, e, ct] = await Promise.all([
       supabase.from("clubs").select("*").eq("id", clubId).maybeSingle(),
-      supabase.from("club_members").select("user_id, role, profiles:user_id(full_name)").eq("club_id", clubId),
+      supabase.from("club_members").select("user_id, role, profiles:user_id(id, full_name, skill_level, is_active)").eq("club_id", clubId),
       supabase.from("events").select("id,title,event_type,starts_at,status").eq("club_id", clubId).order("starts_at", { ascending: true }),
       supabase.from("courts").select("id,name,surface,indoor").eq("club_id", clubId),
     ]);
     setClub(c.data);
-    setMembers(m.data ?? []);
+    const sorted = (m.data ?? []).sort((a: any, b: any) =>
+      (a.profiles?.full_name ?? "").localeCompare(b.profiles?.full_name ?? "")
+    );
+    setMembers(sorted);
+
+    const memberIds = sorted.map((x: any) => x.profiles?.id).filter(Boolean);
+    if (memberIds.length > 0) {
+      const { data: pres } = await supabase
+        .from("user_presence")
+        .select("user_id, status")
+        .in("user_id", memberIds);
+      const pm: Record<string, string> = {};
+      (pres ?? []).forEach((p: any) => { pm[p.user_id] = p.status; });
+      setPresenceMap(pm);
+    }
     setEvents(e.data ?? []);
     setCourts(ct.data ?? []);
     setIsMember((m.data ?? []).some((mm: any) => mm.user_id === user?.id));
@@ -91,12 +106,28 @@ function Inner() {
           ))}
         </TabsContent>
         <TabsContent value="members" className="space-y-2 mt-4">
-          {members.length === 0 ? <Empty /> : members.map((m: any) => (
-            <div key={m.user_id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between">
-              <span>{m.profiles?.full_name || "—"}</span>
-              <span className="text-xs text-muted-foreground">{m.role}</span>
-            </div>
-          ))}
+          {members.length === 0 ? <Empty /> : members.map((m: any) => {
+            const isOnline = presenceMap[m.profiles?.id] === "online";
+            const isIdle = presenceMap[m.profiles?.id] === "idle";
+            return (
+              <div key={m.user_id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    isOnline ? "bg-emerald-500" : isIdle ? "bg-amber-400" : "bg-muted-foreground/30"
+                  }`} />
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{m.profiles?.full_name || "—"}</div>
+                    <div className="text-xs text-muted-foreground">{m.role}{m.profiles?.skill_level ? ` · ${m.profiles.skill_level}` : ""}</div>
+                  </div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-md flex-shrink-0 ${
+                  m.profiles?.is_active !== false ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                }`}>
+                  {m.profiles?.is_active !== false ? "Active" : "Inactive"}
+                </span>
+              </div>
+            );
+          })}
         </TabsContent>
         <TabsContent value="courts" className="space-y-2 mt-4">
           {isAdmin && (

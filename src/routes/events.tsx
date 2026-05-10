@@ -128,7 +128,10 @@ function Inner() {
             <div key={e.id} className="rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-4">
               <Link to="/events/$eventId" params={{ eventId: e.id }} className="flex-1 min-w-0">
                 <div className="font-medium truncate">{e.title}</div>
-                <div className="text-xs text-muted-foreground truncate">{e.clubs?.name} · {e.event_type} · {e.starts_at ? new Date(e.starts_at).toLocaleString() : "—"}</div>
+                <div className="text-xs text-muted-foreground truncate">
+                  <Link to="/clubs/$clubId" params={{ clubId: e.club_id }} className="hover:underline">{e.clubs?.name}</Link>
+                  {" · "}{e.event_type}{" · "}{e.starts_at ? new Date(e.starts_at).toLocaleString() : "—"}
+                </div>
               </Link>
               {regs.has(e.id) ? (
                 <Button size="sm" variant="outline" onClick={() => unregister(e.id)}>
