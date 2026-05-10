@@ -33,6 +33,8 @@ function Inner() {
   const [regs, setRegs] = useState<any[]>([]);
   const [matches, setMatches] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [rounds, setRounds] = useState(4);
+  const [courts, setCourts] = useState(2);
 
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("*, clubs:club_id(name)").eq("id", eventId).maybeSingle();
@@ -79,9 +81,137 @@ function Inner() {
     const shuffled = shuffle(players);
     const rows: any[] = [];
     if (isDoubles) {
-      for (let i = 0; i + 3 < shuffled.length; i += 4) {
-        rows.push({ event_id: eventId, club_id: event.club_id, player1_id: shuffled[i], player2_id: shuffled[i+1], player3_id: shuffled[i+2], player4_id: shuffled[i+3], status: "scheduled" });
+      // Smart schedule generation
+      const playerList = approved.map((r: any) => ({
+        id: r.user_id as string,
+        gender: (r.profiles?.gender ?? "unspecified") as string,
+      }));
+      const pairCount: Record<string, number> = {};
+      const oppCount: Record<string, number> = {};
+      const gameCount: Record<string, number> = {};
+      playerList.forEach((p) => { gameCount[p.id] = 0; });
+      const pk = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+      const combos2 = (arr: string[]): [string, string][] => {
+        const res: [string, string][] = [];
+        for (let i = 0; i < arr.length - 1; i++)
+          for (let j = i + 1; j < arr.length; j++) res.push([arr[i], arr[j]]);
+        return res;
+      };
+      const combos4 = (arr: string[]): [string, string, string, string][] => {
+        const res: [string, string, string, string][] = [];
+        for (let i = 0; i < arr.length - 3; i++)
+          for (let j = i + 1; j < arr.length - 2; j++)
+            for (let k = j + 1; k < arr.length - 1; k++)
+              for (let l = k + 1; l < arr.length; l++) res.push([arr[i], arr[j], arr[k], arr[l]]);
+        return res;
+      };
+      const scoreCandidate = (
+        p1a: string, p1b: string, p2a: string, p2b: string,
+        pc: Record<string, number>, oc: Record<string, number>, gc: Record<string, number>,
+      ): number => {
+        let s = 0;
+        s -= (pc[pk(p1a, p1b)] ?? 0) * 1000;
+        s -= (pc[pk(p2a, p2b)] ?? 0) * 1000;
+        for (const [a, b] of [[p1a, p2a], [p1a, p2b], [p1b, p2a], [p1b, p2b]] as [string, string][])
+          s -= (oc[pk(a, b)] ?? 0) * 100;
+        const counts = [gc[p1a] ?? 0, gc[p1b] ?? 0, gc[p2a] ?? 0, gc[p2b] ?? 0];
+        s -= (Math.max(...counts) - Math.min(...counts)) * 50;
+        s -= counts.reduce((a, b) => a + b, 0) * 5;
+        s += Math.random() * 0.5;
+        return s;
+      };
+      type Assign = { p1a: string; p1b: string; p2a: string; p2b: string };
+      const commit = (g: Assign, pc: Record<string, number>, oc: Record<string, number>, gc: Record<string, number>) => {
+        pc[pk(g.p1a, g.p1b)] = (pc[pk(g.p1a, g.p1b)] ?? 0) + 1;
+        pc[pk(g.p2a, g.p2b)] = (pc[pk(g.p2a, g.p2b)] ?? 0) + 1;
+        for (const [a, b] of [[g.p1a, g.p2a], [g.p1a, g.p2b], [g.p1b, g.p2a], [g.p1b, g.p2b]] as [string, string][])
+          oc[pk(a, b)] = (oc[pk(a, b)] ?? 0) + 1;
+        [g.p1a, g.p1b, g.p2a, g.p2b].forEach((id) => { gc[id] = (gc[id] ?? 0) + 1; });
+      };
+      const genGame = (
+        used: Set<string>,
+        pc: Record<string, number>, oc: Record<string, number>, gc: Record<string, number>,
+      ): Assign | null => {
+        const avail = shuffle(playerList.filter((p) => !used.has(p.id)));
+        if (avail.length < 4) return null;
+        let best: Assign | null = null;
+        let bestScore = -Infinity;
+        if (isMixed) {
+          const men = avail.filter((p) => p.gender === "male").map((p) => p.id);
+          const women = avail.filter((p) => p.gender === "female").map((p) => p.id);
+          if (men.length < 2 || women.length < 2) return null;
+          for (const [m1, m2] of combos2(men))
+            for (const [w1, w2] of combos2(women))
+              for (const [p1a, p1b, p2a, p2b] of [[m1, w1, m2, w2], [m1, w2, m2, w1]] as [string, string, string, string][]) {
+                const sc = scoreCandidate(p1a, p1b, p2a, p2b, pc, oc, gc);
+                if (sc > bestScore) { bestScore = sc; best = { p1a, p1b, p2a, p2b }; }
+              }
+        } else {
+          for (const [a, b, c, d] of combos4(avail.map((p) => p.id)))
+            for (const [p1a, p1b, p2a, p2b] of [[a, b, c, d], [a, c, b, d], [a, d, b, c]] as [string, string, string, string][]) {
+              const sc = scoreCandidate(p1a, p1b, p2a, p2b, pc, oc, gc);
+              if (sc > bestScore) { bestScore = sc; best = { p1a, p1b, p2a, p2b }; }
+            }
+        }
+        return best;
+      };
+      const trialSchedule = (): (Assign | null)[][] => {
+        const tPC = { ...pairCount }, tOC = { ...oppCount }, tGC = { ...gameCount };
+        const allRounds: (Assign | null)[][] = [];
+        for (let r = 0; r < rounds; r++) {
+          let bestRound: (Assign | null)[] = [];
+          let bestScore = -Infinity;
+          for (let attempt = 0; attempt < 10; attempt++) {
+            const order = shuffle(Array.from({ length: courts }, (_, i) => i));
+            const rGames: (Assign | null)[] = new Array(courts).fill(null);
+            const aPC = { ...tPC }, aOC = { ...tOC }, aGC = { ...tGC };
+            const used = new Set<string>();
+            let rScore = 0;
+            for (const c of order) {
+              const g = genGame(used, aPC, aOC, aGC);
+              if (g) {
+                [g.p1a, g.p1b, g.p2a, g.p2b].forEach((id) => used.add(id));
+                commit(g, aPC, aOC, aGC);
+                rScore += scoreCandidate(g.p1a, g.p1b, g.p2a, g.p2b, tPC, tOC, tGC);
+                rGames[c] = g;
+              }
+            }
+            if (rScore > bestScore) { bestScore = rScore; bestRound = [...rGames]; }
+          }
+          bestRound.forEach((g) => { if (g) commit(g, tPC, tOC, tGC); });
+          allRounds.push(bestRound);
+        }
+        return allRounds;
+      };
+      let bestRounds: (Assign | null)[][] = [];
+      let bestTrialScore = -Infinity;
+      for (let t = 0; t < 30; t++) {
+        const trial = trialSchedule();
+        const pc: Record<string, number> = {}, oc: Record<string, number> = {};
+        trial.flat().forEach((g) => {
+          if (!g) return;
+          pc[pk(g.p1a, g.p1b)] = (pc[pk(g.p1a, g.p1b)] ?? 0) + 1;
+          pc[pk(g.p2a, g.p2b)] = (pc[pk(g.p2a, g.p2b)] ?? 0) + 1;
+          for (const [a, b] of [[g.p1a, g.p2a], [g.p1a, g.p2b], [g.p1b, g.p2a], [g.p1b, g.p2b]] as [string, string][])
+            oc[pk(a, b)] = (oc[pk(a, b)] ?? 0) + 1;
+        });
+        const pR = Object.values(pc).filter((v) => v > 1).reduce((a, b) => a + b - 1, 0);
+        const oR = Object.values(oc).filter((v) => v > 1).reduce((a, b) => a + b - 1, 0);
+        const score = -(oR * 100 + pR * 10);
+        if (score > bestTrialScore) { bestTrialScore = score; bestRounds = trial; }
       }
+      bestRounds.flat().forEach((g) => {
+        if (!g) return;
+        rows.push({
+          event_id: eventId,
+          club_id: event.club_id,
+          player1_id: g.p1a,
+          player2_id: g.p1b,
+          player3_id: g.p2a,
+          player4_id: g.p2b,
+          status: "scheduled",
+        });
+      });
     } else {
       // round-robin singles
       for (let i = 0; i < shuffled.length; i++) {
@@ -122,7 +252,21 @@ function Inner() {
         </TabsContent>
         <TabsContent value="matches" className="space-y-3 mt-4">
           {isAdmin && (
-            <Button onClick={generate} variant="outline"><Shuffle /> {t("matches.generate")}</Button>
+            <div className="flex flex-wrap gap-2 items-end">
+              {(event.discipline === "doubles" || event.discipline === "mixed") && (
+                <>
+                  <label className="text-sm">
+                    <span className="block text-xs text-muted-foreground mb-1">Rounds</span>
+                    <Input type="number" min={1} max={20} className="w-20" value={rounds} onChange={(e) => setRounds(Math.max(1, Number(e.target.value) || 1))} />
+                  </label>
+                  <label className="text-sm">
+                    <span className="block text-xs text-muted-foreground mb-1">Courts</span>
+                    <Input type="number" min={1} max={20} className="w-20" value={courts} onChange={(e) => setCourts(Math.max(1, Number(e.target.value) || 1))} />
+                  </label>
+                </>
+              )}
+              <Button onClick={generate} variant="outline"><Shuffle /> {t("matches.generate")}</Button>
+            </div>
           )}
           {matches.length === 0 ? (
             <div className="text-sm text-muted-foreground">{t("matches.empty")}</div>
