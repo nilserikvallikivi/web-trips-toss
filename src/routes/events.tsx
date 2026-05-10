@@ -66,6 +66,17 @@ function Inner() {
     if (error) toast.error(error.message); else { toast.success(t("events.registered")); load(); }
   };
 
+  const unregister = async (eventId: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("event_registrations")
+      .delete()
+      .eq("event_id", eventId)
+      .eq("user_id", user.id);
+    if (error) toast.error(error.message);
+    else { toast.success(t("events.unregistered")); load(); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -120,7 +131,9 @@ function Inner() {
                 <div className="text-xs text-muted-foreground truncate">{e.clubs?.name} · {e.event_type} · {e.starts_at ? new Date(e.starts_at).toLocaleString() : "—"}</div>
               </Link>
               {regs.has(e.id) ? (
-                <span className="text-xs rounded-md bg-secondary text-secondary-foreground px-2 py-1">{t("events.registered")}</span>
+                <Button size="sm" variant="outline" onClick={() => unregister(e.id)}>
+                  {t("events.unregister")}
+                </Button>
               ) : (
                 <Button size="sm" variant="outline" onClick={() => register(e.id)}>{t("events.register")}</Button>
               )}
