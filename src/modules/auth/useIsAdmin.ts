@@ -22,6 +22,11 @@ export function useIsAdmin() {
       .then(({ data }) => {
         if (cancelled) return;
         const roles = (data ?? []).map((r) => r.role);
+        // isAdmin = access to Admin Console
+        // Controlled by app_role in user_roles table (not club_members.role)
+        // super_admin: full system access
+        // club_admin: admin console access (granted manually via Admin Console)
+        // club_members.role "admin" = club-level admin, separate concept
         setIsAdmin(roles.includes("super_admin") || roles.includes("club_admin"));
         setLoading(false);
       });
