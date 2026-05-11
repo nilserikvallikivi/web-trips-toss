@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/modules/auth/RequireAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { useIsSuperAdmin } from "@/modules/auth/useIsSuperAdmin";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/clubs/$clubId")({
 function Inner() {
   const { clubId } = Route.useParams();
   const { user } = useAuth();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const { t } = useTranslation();
   const [club, setClub] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
@@ -58,9 +60,9 @@ function Inner() {
     setCourts(ct.data ?? []);
     setIsMember((m.data ?? []).some((mm: any) => mm.user_id === user?.id));
     const me = (m.data ?? []).find((mm: any) => mm.user_id === user?.id);
-    setIsAdmin(me?.role === "admin" || me?.role === "organizer");
+    setIsAdmin(me?.role === "admin" || me?.role === "organizer" || isSuperAdmin);
   };
-  useEffect(() => { load(); }, [clubId, user?.id]);
+  useEffect(() => { load(); }, [clubId, user?.id, isSuperAdmin]);
 
   const join = async () => {
     if (!user) return;
@@ -86,7 +88,7 @@ function Inner() {
           <h1 className="text-2xl font-semibold mt-1">{club.name}</h1>
           {club.location && <p className="text-sm text-muted-foreground">{club.location}</p>}
         </div>
-        {!isMember && club.privacy === "public" && (
+        {!isMember && !isSuperAdmin && club.privacy === "public" && (
           <Button onClick={join}>{t("clubs.join")}</Button>
         )}
       </div>
