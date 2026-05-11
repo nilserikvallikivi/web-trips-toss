@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/modules/auth/RequireAuth";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { useIsSuperAdmin } from "@/modules/auth/useIsSuperAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +23,10 @@ export const Route = createFileRoute("/events")({
 function Inner() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const [events, setEvents] = useState<any[]>([]);
   const [myClubs, setMyClubs] = useState<any[]>([]);
+  const [allClubs, setAllClubs] = useState<any[]>([]);
   const [regs, setRegs] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "" });
@@ -38,8 +41,12 @@ function Inner() {
       const { data: r } = await supabase.from("event_registrations").select("event_id").eq("user_id", user.id);
       setRegs(new Set((r ?? []).map((x) => x.event_id)));
     }
+    if (isSuperAdmin) {
+      const { data: ac } = await supabase.from("clubs").select("id, name").is("deleted_at", null).is("archived_at", null).order("name");
+      setAllClubs(ac ?? []);
+    }
   };
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); }, [user?.id, isSuperAdmin]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +89,7 @@ function Inner() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{t("events.title")}</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button disabled={myClubs.length === 0}><Plus /> {t("events.create")}</Button></DialogTrigger>
+          <DialogTrigger asChild><Button disabled={!isSuperAdmin && myClubs.length === 0}><Plus /> {t("events.create")}</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>{t("events.create")}</DialogTitle></DialogHeader>
             <form onSubmit={create} className="space-y-4">
@@ -91,7 +98,10 @@ function Inner() {
                 <Select value={form.club_id} onValueChange={(v) => setForm({ ...form, club_id: v })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
-                    {myClubs.map((c: any) => <SelectItem key={c.club_id} value={c.club_id}>{c.clubs?.name}</SelectItem>)}
+                    {isSuperAdmin
+                      ? allClubs.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)
+                      : myClubs.map((c: any) => <SelectItem key={c.club_id} value={c.club_id}>{c.clubs?.name}</SelectItem>)
+                    }
                   </SelectContent>
                 </Select>
               </div>
