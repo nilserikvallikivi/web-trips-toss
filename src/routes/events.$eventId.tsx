@@ -42,7 +42,7 @@ function Inner() {
   const [rounds, setRounds] = useState(4);
   const [courts, setCourts] = useState(2);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ title: "", starts_at: "", status: "" });
+  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", status: "" });
 
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("*, clubs:club_id(name)").eq("id", eventId).maybeSingle();
@@ -240,6 +240,7 @@ function Inner() {
     const { error } = await supabase.from("events").update({
       title: editForm.title,
       starts_at: editForm.starts_at || null,
+      registration_deadline: editForm.registration_deadline || null,
       status: editForm.status as any,
     }).eq("id", eventId);
     if (error) return toast.error(error.message);
@@ -271,7 +272,7 @@ function Inner() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Dialog open={editOpen} onOpenChange={(o) => {
               setEditOpen(o);
-              if (o) setEditForm({ title: event.title, starts_at: event.starts_at?.slice(0, 16) ?? "", status: event.status });
+              if (o) setEditForm({ title: event.title, starts_at: event.starts_at?.slice(0, 16) ?? "", registration_deadline: event.registration_deadline?.slice(0, 16) ?? "", status: event.status });
             }}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">Edit event</Button>
@@ -286,6 +287,10 @@ function Inner() {
                   <div className="space-y-2">
                     <Label>Date & time</Label>
                     <Input type="datetime-local" value={editForm.starts_at} onChange={(e) => setEditForm({ ...editForm, starts_at: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("events.deadline")}</Label>
+                    <Input type="datetime-local" value={editForm.registration_deadline} onChange={(e) => setEditForm({ ...editForm, registration_deadline: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label>Status</Label>
