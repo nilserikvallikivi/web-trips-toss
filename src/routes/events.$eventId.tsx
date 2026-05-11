@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/modules/auth/RequireAuth";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { useIsSuperAdmin } from "@/modules/auth/useIsSuperAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ function Inner() {
   const { eventId } = Route.useParams();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const [event, setEvent] = useState<any>(null);
   const [regs, setRegs] = useState<any[]>([]);
   const [matches, setMatches] = useState<any[]>([]);
@@ -51,10 +53,10 @@ function Inner() {
     setMatches(m ?? []);
     if (ev && user) {
       const { data: cm } = await supabase.from("club_members").select("role").eq("club_id", ev.club_id).eq("user_id", user.id).maybeSingle();
-      setIsAdmin(cm?.role === "admin" || cm?.role === "organizer" || ev.created_by === user.id);
+      setIsAdmin(cm?.role === "admin" || cm?.role === "organizer" || ev.created_by === user.id || isSuperAdmin);
     }
   };
-  useEffect(() => { load(); }, [eventId, user?.id]);
+  useEffect(() => { load(); }, [eventId, user?.id, isSuperAdmin]);
 
   const generate = async () => {
     if (!event) return;
