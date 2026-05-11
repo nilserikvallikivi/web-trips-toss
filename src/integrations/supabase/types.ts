@@ -255,6 +255,7 @@ export type Database = {
           id: string
           max_participants: number | null
           ranking_impact: boolean
+          recurrence: string
           registration_deadline: string | null
           starts_at: string | null
           status: Database["public"]["Enums"]["event_status"]
@@ -275,6 +276,7 @@ export type Database = {
           id?: string
           max_participants?: number | null
           ranking_impact?: boolean
+          recurrence?: string
           registration_deadline?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]
@@ -295,6 +297,7 @@ export type Database = {
           id?: string
           max_participants?: number | null
           ranking_impact?: boolean
+          recurrence?: string
           registration_deadline?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]
@@ -825,6 +828,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      venues: {
+        Row: {
+          address: string
+          club_id: string
+          created_at: string
+          google_maps_url: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          address: string
+          club_id: string
+          created_at?: string
+          google_maps_url?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          address?: string
+          club_id?: string
+          created_at?: string
+          google_maps_url?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venues_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
