@@ -81,7 +81,6 @@ const resources = {
         filterMine: "My events",
         registeredCount: "registered",
         deadlinePassed: "Registration closed",
-        deadline: "Registration deadline",
       },
       matches: {
         title: "Matches",
