@@ -76,6 +76,11 @@ const resources = {
         max: "Max participants",
         unregister: "Unregister",
         unregistered: "Registration cancelled",
+        filterUpcoming: "Upcoming",
+        filterPast: "Past",
+        filterMine: "My events",
+        registeredCount: "registered",
+        deadlinePassed: "Registration closed",
       },
       matches: {
         title: "Matches",
@@ -199,6 +204,11 @@ const resources = {
         max: "Max osalejaid",
         unregister: "Tühista",
         unregistered: "Registreering tühistatud",
+        filterUpcoming: "Tulevased",
+        filterPast: "Möödunud",
+        filterMine: "Minu üritused",
+        registeredCount: "registreerunud",
+        deadlinePassed: "Registreerimine suletud",
       },
       matches: {
         title: "Mängud",

@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/events")({
   head: () => ({ meta: [{ title: "Events — AceCourt" }] }),
@@ -28,13 +29,19 @@ function Inner() {
   const [myClubs, setMyClubs] = useState<any[]>([]);
   const [allClubs, setAllClubs] = useState<any[]>([]);
   const [regs, setRegs] = useState<Set<string>>(new Set());
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [filter, setFilter] = useState<"upcoming" | "past" | "mine">("upcoming");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "" });
+  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "" });
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,status,club_id, clubs:club_id(name)").order("starts_at", { ascending: true });
+    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id, clubs:club_id(name)").order("starts_at", { ascending: true });
     setEvents(ev ?? []);
+    const { data: allRegs } = await supabase.from("event_registrations").select("event_id");
+    const c: Record<string, number> = {};
+    (allRegs ?? []).forEach((r: any) => { c[r.event_id] = (c[r.event_id] ?? 0) + 1; });
+    setCounts(c);
     if (user) {
       const { data: cm } = await supabase.from("club_members").select("club_id, clubs:club_id(id,name)").eq("user_id", user.id);
       setMyClubs(cm ?? []);
@@ -57,13 +64,14 @@ function Inner() {
       club_id: form.club_id,
       event_type: form.event_type as any,
       starts_at: form.starts_at || null,
+      registration_deadline: form.registration_deadline || null,
       status: "published",
       created_by: user.id,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(t("events.create"));
-    setOpen(false); setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "" });
+    setOpen(false); setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "" });
     load();
   };
 
@@ -83,6 +91,15 @@ function Inner() {
     if (error) toast.error(error.message);
     else { toast.success(t("events.unregistered")); load(); }
   };
+
+  const now = Date.now();
+  const isPast = (e: any) => e.starts_at && new Date(e.starts_at).getTime() < now;
+  const deadlinePassed = (e: any) => e.registration_deadline && new Date(e.registration_deadline).getTime() < now;
+  const filtered = events.filter((e) => {
+    if (filter === "past") return isPast(e);
+    if (filter === "mine") return regs.has(e.id);
+    return !isPast(e);
+  });
 
   return (
     <div className="space-y-6">
@@ -124,31 +141,48 @@ function Inner() {
                 <Label>{t("events.when")}</Label>
                 <Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
               </div>
+              <div className="space-y-2">
+                <Label>{t("events.deadline")}</Label>
+                <Input type="datetime-local" value={form.registration_deadline} onChange={(e) => setForm({ ...form, registration_deadline: e.target.value })} />
+              </div>
               <Button type="submit" disabled={busy} className="w-full">{t("common.save")}</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {events.length === 0 ? (
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+        <TabsList>
+          <TabsTrigger value="upcoming">{t("events.filterUpcoming")}</TabsTrigger>
+          <TabsTrigger value="past">{t("events.filterPast")}</TabsTrigger>
+          <TabsTrigger value="mine">{t("events.filterMine")}</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">{t("events.empty")}</div>
       ) : (
         <div className="space-y-2">
-          {events.map((e: any) => (
+          {filtered.map((e: any) => (
             <div key={e.id} className="rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-4">
               <Link to="/events/$eventId" params={{ eventId: e.id }} className="flex-1 min-w-0">
                 <div className="font-medium truncate">{e.title}</div>
                 <div className="text-xs text-muted-foreground truncate">
                   <Link to="/clubs/$clubId" params={{ clubId: e.club_id }} className="hover:underline">{e.clubs?.name}</Link>
                   {" · "}{e.event_type}{" · "}{e.starts_at ? new Date(e.starts_at).toLocaleString() : "—"}
+                  {" · "}{counts[e.id] ?? 0} {t("events.registeredCount")}
                 </div>
               </Link>
-              {regs.has(e.id) ? (
-                <Button size="sm" variant="outline" onClick={() => unregister(e.id)}>
-                  {t("events.unregister")}
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" onClick={() => register(e.id)}>{t("events.register")}</Button>
+              {!isPast(e) && (
+                regs.has(e.id) ? (
+                  <Button size="sm" variant="outline" onClick={() => unregister(e.id)}>
+                    {t("events.unregister")}
+                  </Button>
+                ) : deadlinePassed(e) ? (
+                  <span className="text-xs text-muted-foreground">{t("events.deadlinePassed")}</span>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => register(e.id)}>{t("events.register")}</Button>
+                )
               )}
             </div>
           ))}
