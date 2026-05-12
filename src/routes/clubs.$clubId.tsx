@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/clubs/$clubId")({
   head: () => ({ meta: [{ title: "Club — AceCourt" }] }),
@@ -32,6 +34,11 @@ function Inner() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [courtForm, setCourtForm] = useState({ name: "", surface: "", indoor: false });
   const [presenceMap, setPresenceMap] = useState<Record<string, string>>({});
+  const [venues, setVenues] = useState<any[]>([]);
+  const [venueOpen, setVenueOpen] = useState(false);
+  const [venueForm, setVenueForm] = useState({ name: "", address: "", google_maps_url: "" });
+  const [editClubOpen, setEditClubOpen] = useState(false);
+  const [editClubForm, setEditClubForm] = useState({ name: "", description: "", location: "" });
 
   const load = async () => {
     const [c, m, e, ct] = await Promise.all([
@@ -61,6 +68,12 @@ function Inner() {
     setIsMember((m.data ?? []).some((mm: any) => mm.user_id === user?.id));
     const me = (m.data ?? []).find((mm: any) => mm.user_id === user?.id);
     setIsAdmin(me?.role === "admin" || me?.role === "organizer" || isSuperAdmin);
+    const { data: vn } = await supabase
+      .from("venues")
+      .select("id, name, address, google_maps_url")
+      .eq("club_id", clubId)
+      .order("name");
+    setVenues(vn ?? []);
   };
   useEffect(() => { load(); }, [clubId, user?.id, isSuperAdmin]);
 
@@ -78,6 +91,44 @@ function Inner() {
     load();
   };
 
+  const addVenue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from("venues").insert({
+      club_id: clubId,
+      name: venueForm.name,
+      address: venueForm.address,
+      google_maps_url: venueForm.google_maps_url || null,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Asukoht lisatud");
+    setVenueOpen(false);
+    setVenueForm({ name: "", address: "", google_maps_url: "" });
+    load();
+  };
+
+  const updateClub = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from("clubs").update({
+      name: editClubForm.name,
+      description: editClubForm.description || null,
+      location: editClubForm.location || null,
+    }).eq("id", clubId);
+    if (error) return toast.error(error.message);
+    toast.success("Klubi uuendatud");
+    setEditClubOpen(false);
+    load();
+  };
+
+  const deleteClub = async () => {
+    if (!confirm("Kustuta klubi? Seda ei saa tagasi võtta.")) return;
+    const { error } = await supabase.from("clubs")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", clubId);
+    if (error) return toast.error(error.message);
+    toast.success("Klubi kustutatud");
+    window.history.back();
+  };
+
   if (!club) return <div className="text-muted-foreground">{t("common.loading")}</div>;
 
   return (
@@ -92,12 +143,46 @@ function Inner() {
           <Button onClick={join}>{t("clubs.join")}</Button>
         )}
       </div>
+      {isAdmin && (
+        <div className="flex flex-wrap gap-2">
+          <Dialog open={editClubOpen} onOpenChange={(o) => {
+            setEditClubOpen(o);
+            if (o) setEditClubForm({ name: club.name, description: club.description ?? "", location: club.location ?? "" });
+          }}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">Muuda klubi</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Muuda klubi</DialogTitle></DialogHeader>
+              <form onSubmit={updateClub} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nimi</Label>
+                  <Input value={editClubForm.name} onChange={(e) => setEditClubForm({ ...editClubForm, name: e.target.value })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Kirjeldus</Label>
+                  <Input value={editClubForm.description} onChange={(e) => setEditClubForm({ ...editClubForm, description: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Asukoht (üldine)</Label>
+                  <Input value={editClubForm.location} onChange={(e) => setEditClubForm({ ...editClubForm, location: e.target.value })} />
+                </div>
+                <Button type="submit" className="w-full">Salvesta</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+          {isSuperAdmin && (
+            <Button size="sm" variant="destructive" onClick={deleteClub}>Kustuta klubi</Button>
+          )}
+        </div>
+      )}
 
       <Tabs defaultValue="events">
         <TabsList>
           <TabsTrigger value="events">{t("clubs.events")}</TabsTrigger>
           <TabsTrigger value="members">{t("clubs.members")}</TabsTrigger>
           <TabsTrigger value="courts">{t("clubs.courts")}</TabsTrigger>
+          <TabsTrigger value="venues">Asukohad ({venues.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="events" className="space-y-2 mt-4">
           {events.length === 0 ? <Empty /> : events.map((e) => (
@@ -153,6 +238,53 @@ function Inner() {
               <span className="text-xs text-muted-foreground">{c.surface ?? "—"} · {c.indoor ? "indoor" : "outdoor"}</span>
             </div>
           ))}
+        </TabsContent>
+        <TabsContent value="venues" className="space-y-2 mt-4">
+          {isAdmin && (
+            <Dialog open={venueOpen} onOpenChange={setVenueOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">+ Lisa asukoht</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Lisa asukoht</DialogTitle></DialogHeader>
+                <form onSubmit={addVenue} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Nimi *</Label>
+                    <Input value={venueForm.name} onChange={(e) => setVenueForm({ ...venueForm, name: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Aadress *</Label>
+                    <Input value={venueForm.address} onChange={(e) => setVenueForm({ ...venueForm, address: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Google Maps link (vabatahtlik)</Label>
+                    <Input value={venueForm.google_maps_url} onChange={(e) => setVenueForm({ ...venueForm, google_maps_url: e.target.value })} />
+                  </div>
+                  <Button type="submit" className="w-full">Lisa asukoht</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+          {venues.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Asukohti pole lisatud.</p>
+          ) : (
+            venues.map((v: any) => (
+              <div key={v.id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{v.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{v.address}</div>
+                </div>
+                <a
+                  href={v.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline flex-shrink-0"
+                >
+                  Vaata kaardil
+                </a>
+              </div>
+            ))
+          )}
         </TabsContent>
       </Tabs>
     </div>
