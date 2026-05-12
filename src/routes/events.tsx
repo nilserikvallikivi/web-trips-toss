@@ -49,7 +49,7 @@ function Inner() {
   const [editVenues, setEditVenues] = useState<any[]>([]);
 
   const load = async () => {
-    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id,created_by,recurrence, clubs:club_id(name)").order("starts_at", { ascending: true });
+    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id,created_by,recurrence,venue_id, clubs:club_id(name)").order("starts_at", { ascending: true });
     setEvents(ev ?? []);
     const { data: allRegs } = await supabase.from("event_registrations").select("event_id");
     const c: Record<string, number> = {};
@@ -121,6 +121,7 @@ function Inner() {
       registration_deadline: editForm.registration_deadline || null,
       recurrence: editForm.recurrence,
       status: editForm.status as any,
+      venue_id: editForm.venue_id || null,
     }).eq("id", editTarget.id);
     if (error) return toast.error(error.message);
     toast.success("Event uuendatud");
@@ -136,7 +137,7 @@ function Inner() {
     load();
   };
 
-  const openEdit = (e: any) => {
+  const openEdit = async (e: any) => {
     if (!isSuperAdmin && e.created_by !== user?.id) return;
     setEditTarget(e);
     setEditForm({
@@ -145,8 +146,15 @@ function Inner() {
       registration_deadline: e.registration_deadline?.slice(0, 16) ?? "",
       recurrence: e.recurrence ?? "none",
       status: e.status,
+      venue_id: e.venue_id ?? "",
     });
     setEditOpen(true);
+    const { data } = await supabase
+      .from("venues")
+      .select("id, name, address")
+      .eq("club_id", e.club_id)
+      .order("name");
+    setEditVenues(data ?? []);
   };
 
   const loadVenues = async (clubId: string) => {
