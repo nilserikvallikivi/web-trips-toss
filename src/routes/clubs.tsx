@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -18,10 +18,14 @@ type Club = { id: string; name: string; description: string | null; location: st
 
 export const Route = createFileRoute("/clubs")({
   head: () => ({ meta: [{ title: "Clubs — AceCourt" }] }),
-  component: () => (
-    <AppShell><RequireAuth><Inner /></RequireAuth></AppShell>
-  ),
+  component: ClubsRouteComponent,
 });
+
+function ClubsRouteComponent() {
+  const matchRoute = useMatchRoute();
+  if (matchRoute({ to: "/clubs/$clubId" })) return <Outlet />;
+  return <AppShell><RequireAuth><Inner /></RequireAuth></AppShell>;
+}
 
 function Inner() {
   const { t } = useTranslation();
