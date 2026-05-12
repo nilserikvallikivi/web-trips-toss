@@ -260,6 +260,7 @@ export type Database = {
           starts_at: string | null
           status: Database["public"]["Enums"]["event_status"]
           title: string
+          venue_id: string | null
         }
         Insert: {
           allow_waitlist?: boolean
@@ -281,6 +282,7 @@ export type Database = {
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           title: string
+          venue_id?: string | null
         }
         Update: {
           allow_waitlist?: boolean
@@ -302,6 +304,7 @@ export type Database = {
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
+          venue_id?: string | null
         }
         Relationships: [
           {
@@ -309,6 +312,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
