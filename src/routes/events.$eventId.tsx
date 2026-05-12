@@ -277,6 +277,20 @@ function Inner() {
           <Link to="/clubs/$clubId" params={{ clubId: event.club_id }} className="hover:underline">{event.clubs?.name}</Link>
           {" · "}{event.event_type}{" · "}{event.discipline}
         </p>
+        <p className="text-sm text-muted-foreground">
+          {formatDate(event.starts_at)}
+          {event.recurrence && event.recurrence !== "none" && (
+            <span className="ml-2 text-xs rounded-md bg-accent text-accent-foreground px-2 py-0.5">
+              {({
+                daily: "Iga päev",
+                weekly: "Kord nädalas",
+                biweekly: "Iga 2 nädala tagant",
+                monthly: "Kord kuus",
+                yearly: "Kord aastas",
+              } as Record<string, string>)[event.recurrence] ?? event.recurrence}
+            </span>
+          )}
+        </p>
         {isAdmin && (
           <div className="mt-3 flex flex-wrap gap-2">
             <Dialog open={editOpen} onOpenChange={(o) => {
