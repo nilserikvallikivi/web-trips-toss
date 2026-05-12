@@ -40,7 +40,8 @@ function Inner() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState<"upcoming" | "past" | "mine">("upcoming");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none" });
+  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none", venue_id: "" });
+  const [clubVenues, setClubVenues] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
@@ -66,6 +67,9 @@ function Inner() {
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !form.club_id) return;
+    if (!form.venue_id) {
+      return toast.error("Palun vali eventi asukoht.");
+    }
     setBusy(true);
     const { error } = await supabase.from("events").insert({
       title: form.title,
@@ -74,13 +78,16 @@ function Inner() {
       starts_at: form.starts_at || null,
       registration_deadline: form.registration_deadline || null,
       recurrence: form.recurrence,
+      venue_id: form.venue_id,
       status: "published",
       created_by: user.id,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(t("events.create"));
-    setOpen(false); setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none" });
+    setOpen(false);
+    setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none", venue_id: "" });
+    setClubVenues([]);
     load();
   };
 
@@ -99,6 +106,16 @@ function Inner() {
       .eq("user_id", user.id);
     if (error) toast.error(error.message);
     else { toast.success(t("events.unregistered")); load(); }
+  };
+
+  const loadVenues = async (clubId: string) => {
+    if (!clubId) { setClubVenues([]); return; }
+    const { data } = await supabase
+      .from("venues")
+      .select("id, name, address")
+      .eq("club_id", clubId)
+      .order("name");
+    setClubVenues(data ?? []);
   };
 
   const now = Date.now();
@@ -121,7 +138,7 @@ function Inner() {
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-2">
                 <Label>{t("clubs.title")}</Label>
-                <Select value={form.club_id} onValueChange={(v) => setForm({ ...form, club_id: v })}>
+                <Select value={form.club_id} onValueChange={(v) => { setForm({ ...form, club_id: v, venue_id: "" }); loadVenues(v); }}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
                     {isSuperAdmin
@@ -145,6 +162,23 @@ function Inner() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Asukoht *</Label>
+                {!form.club_id ? (
+                  <p className="text-sm text-muted-foreground">Vali esmalt klubi.</p>
+                ) : clubVenues.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sellel klubil pole asukohti. Lisa asukoht esmalt klubi lehel.</p>
+                ) : (
+                  <Select value={form.venue_id} onValueChange={(v) => setForm({ ...form, venue_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Vali asukoht" /></SelectTrigger>
+                    <SelectContent>
+                      {clubVenues.map((v: any) => (
+                        <SelectItem key={v.id} value={v.id}>{v.name} — {v.address}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>{t("events.when")}</Label>
