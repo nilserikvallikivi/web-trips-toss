@@ -21,6 +21,14 @@ export const Route = createFileRoute("/events/$eventId")({
   component: () => <AppShell><RequireAuth><Inner /></RequireAuth></AppShell>,
 });
 
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("et-EE", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -42,7 +50,7 @@ function Inner() {
   const [rounds, setRounds] = useState(4);
   const [courts, setCourts] = useState(2);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", status: "" });
+  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", status: "", recurrence: "none" });
 
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("*, clubs:club_id(name)").eq("id", eventId).maybeSingle();
