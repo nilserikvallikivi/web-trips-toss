@@ -281,7 +281,7 @@ function Inner() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Dialog open={editOpen} onOpenChange={(o) => {
               setEditOpen(o);
-              if (o) setEditForm({ title: event.title, starts_at: event.starts_at?.slice(0, 16) ?? "", registration_deadline: event.registration_deadline?.slice(0, 16) ?? "", status: event.status });
+              if (o) setEditForm({ title: event.title, starts_at: event.starts_at?.slice(0, 16) ?? "", registration_deadline: event.registration_deadline?.slice(0, 16) ?? "", status: event.status, recurrence: event.recurrence ?? "none" });
             }}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">Edit event</Button>
