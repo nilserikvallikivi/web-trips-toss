@@ -45,7 +45,7 @@ function Inner() {
   const [busy, setBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", recurrence: "none", status: "", venue_id: "" });
+  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", recurrence: "none", status: "", venue_id: "", event_type: "round_robin" });
   const [editVenues, setEditVenues] = useState<any[]>([]);
 
   const load = async () => {
@@ -122,6 +122,7 @@ function Inner() {
       recurrence: editForm.recurrence,
       status: editForm.status as any,
       venue_id: editForm.venue_id || null,
+      event_type: editForm.event_type as any,
     }).eq("id", editTarget.id);
     if (error) return toast.error(error.message);
     toast.success("Event uuendatud");
@@ -147,6 +148,7 @@ function Inner() {
       recurrence: e.recurrence ?? "none",
       status: e.status,
       venue_id: e.venue_id ?? "",
+      event_type: e.event_type ?? "round_robin",
     });
     setEditOpen(true);
     const { data } = await supabase
@@ -308,6 +310,17 @@ function Inner() {
               <div className="space-y-2">
                 <Label>Pealkiri</Label>
                 <Input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} required />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("events.type")}</Label>
+                <Select value={editForm.event_type} onValueChange={v => setEditForm({...editForm, event_type: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["singles_tournament","doubles_tournament","mixed_doubles","league","ladder","round_robin","knockout","casual","training","rotating_doubles","custom"].map((x) => (
+                      <SelectItem key={x} value={x}>{x.replaceAll("_", " ")}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Kuupäev ja kellaaeg</Label>
