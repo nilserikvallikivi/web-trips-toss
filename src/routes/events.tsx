@@ -184,7 +184,7 @@ function Inner() {
         <h1 className="text-2xl font-semibold">{t("events.title")}</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button disabled={!isSuperAdmin && myClubs.length === 0}><Plus /> {t("events.create")}</Button></DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{t("events.create")}</DialogTitle></DialogHeader>
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-2">
@@ -303,7 +303,7 @@ function Inner() {
       )}
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Muuda eventi</DialogTitle></DialogHeader>
           {editTarget && (
             <form onSubmit={updateEvent} className="space-y-4">
