@@ -318,6 +318,21 @@ function Inner() {
                 <Input type="datetime-local" value={editForm.registration_deadline} onChange={e => setEditForm({...editForm, registration_deadline: e.target.value})} />
               </div>
               <div className="space-y-2">
+                <Label>Asukoht</Label>
+                {editVenues.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sellel klubil pole asukohti. Lisa asukoht klubi lehel.</p>
+                ) : (
+                  <Select value={editForm.venue_id} onValueChange={v => setEditForm({...editForm, venue_id: v})}>
+                    <SelectTrigger><SelectValue placeholder="Vali asukoht" /></SelectTrigger>
+                    <SelectContent>
+                      {editVenues.map((v: any) => (
+                        <SelectItem key={v.id} value={v.id}>{v.name} — {v.address}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="space-y-2">
                 <Label>Korduvus</Label>
                 <Select value={editForm.recurrence} onValueChange={v => setEditForm({...editForm, recurrence: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
