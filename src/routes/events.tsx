@@ -43,6 +43,9 @@ function Inner() {
   const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none", venue_id: "" });
   const [clubVenues, setClubVenues] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", recurrence: "none", status: "" });
 
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id, clubs:club_id(name)").order("starts_at", { ascending: true });
