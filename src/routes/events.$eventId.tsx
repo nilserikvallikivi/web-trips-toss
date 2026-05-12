@@ -242,6 +242,7 @@ function Inner() {
       starts_at: editForm.starts_at || null,
       registration_deadline: editForm.registration_deadline || null,
       status: editForm.status as any,
+      recurrence: editForm.recurrence,
     }).eq("id", eventId);
     if (error) return toast.error(error.message);
     toast.success("Event updated");
