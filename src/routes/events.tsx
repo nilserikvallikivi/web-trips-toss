@@ -48,7 +48,7 @@ function Inner() {
   const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", recurrence: "none", status: "" });
 
   const load = async () => {
-    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id, clubs:club_id(name)").order("starts_at", { ascending: true });
+    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id,created_by,recurrence, clubs:club_id(name)").order("starts_at", { ascending: true });
     setEvents(ev ?? []);
     const { data: allRegs } = await supabase.from("event_registrations").select("event_id");
     const c: Record<string, number> = {};
@@ -109,6 +109,43 @@ function Inner() {
       .eq("user_id", user.id);
     if (error) toast.error(error.message);
     else { toast.success(t("events.unregistered")); load(); }
+  };
+
+  const updateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTarget) return;
+    const { error } = await supabase.from("events").update({
+      title: editForm.title,
+      starts_at: editForm.starts_at || null,
+      registration_deadline: editForm.registration_deadline || null,
+      recurrence: editForm.recurrence,
+      status: editForm.status as any,
+    }).eq("id", editTarget.id);
+    if (error) return toast.error(error.message);
+    toast.success("Event uuendatud");
+    setEditOpen(false);
+    load();
+  };
+
+  const deleteEvent = async (id: string) => {
+    if (!confirm("Kustuta event?")) return;
+    const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Event kustutatud");
+    load();
+  };
+
+  const openEdit = (e: any) => {
+    if (!isSuperAdmin && e.created_by !== user?.id) return;
+    setEditTarget(e);
+    setEditForm({
+      title: e.title,
+      starts_at: e.starts_at?.slice(0, 16) ?? "",
+      registration_deadline: e.registration_deadline?.slice(0, 16) ?? "",
+      recurrence: e.recurrence ?? "none",
+      status: e.status,
+    });
+    setEditOpen(true);
   };
 
   const loadVenues = async (clubId: string) => {
@@ -225,14 +262,19 @@ function Inner() {
         <div className="space-y-2">
           {filtered.map((e: any) => (
             <div key={e.id} className="rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-4">
-              <Link to="/events/$eventId" params={{ eventId: e.id }} className="flex-1 min-w-0">
-                <div className="font-medium truncate">{e.title}</div>
+              <div
+                className={`flex-1 min-w-0 ${isSuperAdmin || e.created_by === user?.id ? "cursor-pointer" : ""}`}
+                onClick={() => openEdit(e)}
+              >
+                <div className={`font-medium truncate ${isSuperAdmin || e.created_by === user?.id ? "hover:text-primary transition-colors" : ""}`}>
+                  {e.title}
+                </div>
                 <div className="text-xs text-muted-foreground truncate">
-                  <Link to="/clubs/$clubId" params={{ clubId: e.club_id }} className="hover:underline">{e.clubs?.name}</Link>
+                  <Link to="/clubs/$clubId" params={{ clubId: e.club_id }} className="hover:underline" onClick={ev => ev.stopPropagation()}>{e.clubs?.name}</Link>
                   {" · "}{e.event_type}{" · "}{formatDate(e.starts_at)}
                   {" · "}{counts[e.id] ?? 0} {t("events.registeredCount")}
                 </div>
-              </Link>
+              </div>
               {!isPast(e) && (
                 regs.has(e.id) ? (
                   <Button size="sm" variant="outline" onClick={() => unregister(e.id)}>
@@ -248,6 +290,61 @@ function Inner() {
           ))}
         </div>
       )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Muuda eventi</DialogTitle></DialogHeader>
+          {editTarget && (
+            <form onSubmit={updateEvent} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Pealkiri</Label>
+                <Input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Kuupäev ja kellaaeg</Label>
+                <Input type="datetime-local" value={editForm.starts_at} onChange={e => setEditForm({...editForm, starts_at: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Registreerimise tähtaeg</Label>
+                <Input type="datetime-local" value={editForm.registration_deadline} onChange={e => setEditForm({...editForm, registration_deadline: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Korduvus</Label>
+                <Select value={editForm.recurrence} onValueChange={v => setEditForm({...editForm, recurrence: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Ühekordne</SelectItem>
+                    <SelectItem value="daily">Iga päev</SelectItem>
+                    <SelectItem value="weekly">Kord nädalas</SelectItem>
+                    <SelectItem value="biweekly">Iga kahe nädala tagant</SelectItem>
+                    <SelectItem value="monthly">Kord kuus</SelectItem>
+                    <SelectItem value="yearly">Kord aastas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Staatus</Label>
+                <Select value={editForm.status} onValueChange={v => setEditForm({...editForm, status: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["draft","published","registration_open","registration_closed","in_progress","completed","cancelled"].map(s => (
+                      <SelectItem key={s} value={s}>{s.replaceAll("_"," ")}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1">Salvesta</Button>
+                {isSuperAdmin && (
+                  <Button type="button" variant="destructive" onClick={() => { setEditOpen(false); deleteEvent(editTarget.id); }}>
+                    Kustuta
+                  </Button>
+                )}
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
