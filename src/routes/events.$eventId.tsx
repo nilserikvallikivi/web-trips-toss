@@ -316,6 +316,20 @@ function Inner() {
                     <Input type="datetime-local" value={editForm.registration_deadline} onChange={(e) => setEditForm({ ...editForm, registration_deadline: e.target.value })} />
                   </div>
                   <div className="space-y-2">
+                    <Label>Korduvus</Label>
+                    <Select value={editForm.recurrence} onValueChange={(v) => setEditForm({ ...editForm, recurrence: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Ühekordne</SelectItem>
+                        <SelectItem value="daily">Iga päev</SelectItem>
+                        <SelectItem value="weekly">Kord nädalas</SelectItem>
+                        <SelectItem value="biweekly">Iga kahe nädala tagant</SelectItem>
+                        <SelectItem value="monthly">Kord kuus</SelectItem>
+                        <SelectItem value="yearly">Kord aastas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>Status</Label>
                     <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
