@@ -21,6 +21,18 @@ export const Route = createFileRoute("/events/$eventId")({
   component: () => <AppShell><RequireAuth><Inner /></RequireAuth></AppShell>,
 });
 
+function autoDeadline(startsAt: string): string {
+  if (!startsAt) return "";
+  const d = new Date(startsAt);
+  d.setMinutes(d.getMinutes() - 1);
+  return d.toISOString().slice(0, 16);
+}
+
+function validateDeadline(startsAt: string, deadline: string): boolean {
+  if (!startsAt || !deadline) return true;
+  return new Date(deadline) < new Date(startsAt);
+}
+
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("et-EE", {
@@ -245,6 +257,9 @@ function Inner() {
 
   const updateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (editForm.starts_at && editForm.registration_deadline && !validateDeadline(editForm.starts_at, editForm.registration_deadline)) {
+      return toast.error("Registreerimise tähtaeg peab olema enne eventi algust.");
+    }
     const { error } = await supabase.from("events").update({
       title: editForm.title,
       starts_at: editForm.starts_at || null,
@@ -295,7 +310,11 @@ function Inner() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Dialog open={editOpen} onOpenChange={(o) => {
               setEditOpen(o);
-              if (o) setEditForm({ title: event.title, starts_at: event.starts_at?.slice(0, 16) ?? "", registration_deadline: event.registration_deadline?.slice(0, 16) ?? "", status: event.status, recurrence: event.recurrence ?? "none" });
+              if (o) {
+                const sa = event.starts_at?.slice(0, 16) ?? "";
+                const dl = event.registration_deadline?.slice(0, 16) ?? autoDeadline(sa);
+                setEditForm({ title: event.title, starts_at: sa, registration_deadline: dl, status: event.status, recurrence: event.recurrence ?? "none" });
+              }
             }}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">Edit event</Button>
@@ -309,7 +328,14 @@ function Inner() {
                   </div>
                   <div className="space-y-2">
                     <Label>Date & time</Label>
-                    <Input type="datetime-local" value={editForm.starts_at} onChange={(e) => setEditForm({ ...editForm, starts_at: e.target.value })} />
+                    <Input type="datetime-local" value={editForm.starts_at} onChange={(e) => {
+                      const val = e.target.value;
+                      setEditForm(f => ({
+                        ...f,
+                        starts_at: val,
+                        registration_deadline: f.registration_deadline || autoDeadline(val),
+                      }));
+                    }} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("events.deadline")}</Label>
