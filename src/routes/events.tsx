@@ -21,6 +21,14 @@ export const Route = createFileRoute("/events")({
   component: () => <AppShell><RequireAuth><Inner /></RequireAuth></AppShell>,
 });
 
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("et-EE", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
 function Inner() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -32,7 +40,7 @@ function Inner() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState<"upcoming" | "past" | "mine">("upcoming");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "" });
+  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none" });
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
@@ -65,13 +73,14 @@ function Inner() {
       event_type: form.event_type as any,
       starts_at: form.starts_at || null,
       registration_deadline: form.registration_deadline || null,
+      recurrence: form.recurrence,
       status: "published",
       created_by: user.id,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(t("events.create"));
-    setOpen(false); setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "" });
+    setOpen(false); setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none" });
     load();
   };
 
@@ -145,6 +154,20 @@ function Inner() {
                 <Label>{t("events.deadline")}</Label>
                 <Input type="datetime-local" value={form.registration_deadline} onChange={(e) => setForm({ ...form, registration_deadline: e.target.value })} />
               </div>
+              <div className="space-y-2">
+                <Label>Korduvus</Label>
+                <Select value={form.recurrence} onValueChange={(v) => setForm({ ...form, recurrence: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Ühekordne</SelectItem>
+                    <SelectItem value="daily">Iga päev</SelectItem>
+                    <SelectItem value="weekly">Kord nädalas</SelectItem>
+                    <SelectItem value="biweekly">Iga kahe nädala tagant</SelectItem>
+                    <SelectItem value="monthly">Kord kuus</SelectItem>
+                    <SelectItem value="yearly">Kord aastas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <Button type="submit" disabled={busy} className="w-full">{t("common.save")}</Button>
             </form>
           </DialogContent>
@@ -169,7 +192,7 @@ function Inner() {
                 <div className="font-medium truncate">{e.title}</div>
                 <div className="text-xs text-muted-foreground truncate">
                   <Link to="/clubs/$clubId" params={{ clubId: e.club_id }} className="hover:underline">{e.clubs?.name}</Link>
-                  {" · "}{e.event_type}{" · "}{e.starts_at ? new Date(e.starts_at).toLocaleString() : "—"}
+                  {" · "}{e.event_type}{" · "}{formatDate(e.starts_at)}
                   {" · "}{counts[e.id] ?? 0} {t("events.registeredCount")}
                 </div>
               </Link>
