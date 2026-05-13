@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/clubs/$clubId")({
   head: () => ({ meta: [{ title: "Club — AceCourt" }] }),
@@ -205,7 +206,15 @@ function Inner() {
                   <Input placeholder={t("courts.name")} value={courtForm.name} onChange={(e) => setCourtForm({ ...courtForm, name: e.target.value })} required />
                 </div>
                 <div className="flex-1 min-w-[140px]">
-                  <Input placeholder={t("courts.surface")} value={courtForm.surface} onChange={(e) => setCourtForm({ ...courtForm, surface: e.target.value })} />
+                  <Select value={courtForm.surface} onValueChange={(v) => setCourtForm({ ...courtForm, surface: v })}>
+                    <SelectTrigger><SelectValue placeholder="Surface" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hard">Hard</SelectItem>
+                      <SelectItem value="Clay">Clay</SelectItem>
+                      <SelectItem value="Grass">Grass</SelectItem>
+                      <SelectItem value="Carpet">Carpet</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox checked={courtForm.indoor} onCheckedChange={(v) => setCourtForm({ ...courtForm, indoor: !!v })} />
