@@ -34,7 +34,6 @@ function Inner() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", location: "" });
-  const [venues, setVenues] = useState<{ name: string; address: string }[]>([{ name: "", address: "" }]);
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
@@ -51,28 +50,15 @@ function Inner() {
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (venues.some(v => !v.name.trim() || !v.address.trim())) {
-      return toast.error("Kõigil asukohtadel peab olema nimi ja aadress.");
-    }
     setBusy(true);
-    const { data: club, error } = await supabase.from("clubs").insert({
+    const { error } = await supabase.from("clubs").insert({
       name: form.name, description: form.description || null, location: form.location || null, created_by: user.id,
-    }).select("id").single();
-    if (error || !club) { setBusy(false); return toast.error(error?.message ?? "Error"); }
-
-    const venueRows = venues.filter(v => v.name.trim() && v.address.trim()).map(v => ({
-      club_id: club.id, name: v.name.trim(), address: v.address.trim(),
-    }));
-    if (venueRows.length > 0) {
-      const { error: ve } = await supabase.from("venues").insert(venueRows);
-      if (ve) { setBusy(false); return toast.error(ve.message); }
-    }
-
+    });
     setBusy(false);
+    if (error) return toast.error(error.message);
     toast.success(t("clubs.create"));
     setOpen(false);
     setForm({ name: "", description: "", location: "" });
-    setVenues([{ name: "", address: "" }]);
     load();
   };
 
@@ -97,49 +83,6 @@ function Inner() {
               <div className="space-y-2">
                 <Label>{t("clubs.location")}</Label>
                 <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Asukohad * (vähemalt üks kohustuslik)</Label>
-                {venues.map((v, i) => (
-                  <div key={i} className="space-y-1.5 rounded-md border border-border p-3">
-                    <Input
-                      placeholder="Asukoha nimi (nt. Pärnu Tennisekeskus)"
-                      value={v.name}
-                      onChange={(e) => {
-                        const updated = [...venues];
-                        updated[i] = { ...updated[i], name: e.target.value };
-                        setVenues(updated);
-                      }}
-                      required
-                    />
-                    <Input
-                      placeholder="Aadress (nt. Tammsaare 39, Pärnu)"
-                      value={v.address}
-                      onChange={(e) => {
-                        const updated = [...venues];
-                        updated[i] = { ...updated[i], address: e.target.value };
-                        setVenues(updated);
-                      }}
-                      required
-                    />
-                    {venues.length > 1 && (
-                      <button
-                        type="button"
-                        className="text-xs text-destructive hover:opacity-80"
-                        onClick={() => setVenues(venues.filter((_, idx) => idx !== i))}
-                      >
-                        Eemalda
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="text-xs text-primary hover:opacity-80"
-                  onClick={() => setVenues([...venues, { name: "", address: "" }])}
-                >
-                  + Lisa veel üks asukoht
-                </button>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{t("common.save")}</Button>
             </form>

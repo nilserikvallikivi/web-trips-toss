@@ -52,16 +52,16 @@ function Inner() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState<"upcoming" | "past" | "mine">("upcoming");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none", venue_id: "" });
-  const [clubVenues, setClubVenues] = useState<any[]>([]);
+  const [form, setForm] = useState({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none", court_id: "" });
+  const [clubCourts, setClubCourts] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", recurrence: "none", status: "", venue_id: "", event_type: "round_robin" });
-  const [editVenues, setEditVenues] = useState<any[]>([]);
+  const [editForm, setEditForm] = useState({ title: "", starts_at: "", registration_deadline: "", recurrence: "none", status: "", court_id: "", event_type: "round_robin" });
+  const [editCourts, setEditCourts] = useState<any[]>([]);
 
   const load = async () => {
-    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id,created_by,recurrence,venue_id, clubs:club_id(name)").order("starts_at", { ascending: true });
+    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id,created_by,recurrence,court_id, clubs:club_id(name)").order("starts_at", { ascending: true });
     setEvents(ev ?? []);
     const { data: allRegs } = await supabase.from("event_registrations").select("event_id");
     const c: Record<string, number> = {};
@@ -86,8 +86,8 @@ function Inner() {
     if (form.starts_at && form.registration_deadline && !validateDeadline(form.starts_at, form.registration_deadline)) {
       return toast.error("Registreerimise tähtaeg peab olema enne eventi algust.");
     }
-    if (!form.venue_id) {
-      return toast.error("Palun vali eventi asukoht.");
+    if (!form.court_id) {
+      return toast.error("Palun vali eventi väljak.");
     }
     setBusy(true);
     const { error } = await supabase.from("events").insert({
@@ -97,7 +97,7 @@ function Inner() {
       starts_at: form.starts_at || null,
       registration_deadline: form.registration_deadline || null,
       recurrence: form.recurrence,
-      venue_id: form.venue_id,
+      court_id: form.court_id,
       status: "published",
       created_by: user.id,
     });
@@ -105,8 +105,8 @@ function Inner() {
     if (error) return toast.error(error.message);
     toast.success(t("events.create"));
     setOpen(false);
-    setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none", venue_id: "" });
-    setClubVenues([]);
+    setForm({ title: "", club_id: "", event_type: "round_robin", starts_at: "", registration_deadline: "", recurrence: "none", court_id: "" });
+    setClubCourts([]);
     load();
   };
 
@@ -139,7 +139,7 @@ function Inner() {
       registration_deadline: editForm.registration_deadline || null,
       recurrence: editForm.recurrence,
       status: editForm.status as any,
-      venue_id: editForm.venue_id || null,
+      court_id: editForm.court_id || null,
       event_type: editForm.event_type as any,
     }).eq("id", editTarget.id);
     if (error) return toast.error(error.message);
@@ -167,26 +167,26 @@ function Inner() {
       registration_deadline: dl,
       recurrence: e.recurrence ?? "none",
       status: e.status,
-      venue_id: e.venue_id ?? "",
+      court_id: e.court_id ?? "",
       event_type: e.event_type ?? "round_robin",
     });
     setEditOpen(true);
     const { data } = await supabase
-      .from("venues")
+      .from("courts")
       .select("id, name, address")
       .eq("club_id", e.club_id)
       .order("name");
-    setEditVenues(data ?? []);
+    setEditCourts(data ?? []);
   };
 
-  const loadVenues = async (clubId: string) => {
-    if (!clubId) { setClubVenues([]); return; }
+  const loadCourts = async (clubId: string) => {
+    if (!clubId) { setClubCourts([]); return; }
     const { data } = await supabase
-      .from("venues")
+      .from("courts")
       .select("id, name, address")
       .eq("club_id", clubId)
       .order("name");
-    setClubVenues(data ?? []);
+    setClubCourts(data ?? []);
   };
 
   const now = Date.now();
@@ -209,7 +209,7 @@ function Inner() {
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-2">
                 <Label>{t("clubs.title")}</Label>
-                <Select value={form.club_id} onValueChange={(v) => { setForm({ ...form, club_id: v, venue_id: "" }); loadVenues(v); }}>
+                <Select value={form.club_id} onValueChange={(v) => { setForm({ ...form, club_id: v, court_id: "" }); loadCourts(v); }}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
                     {isSuperAdmin
@@ -235,17 +235,17 @@ function Inner() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Asukoht *</Label>
+                <Label>Väljak *</Label>
                 {!form.club_id ? (
                   <p className="text-sm text-muted-foreground">Vali esmalt klubi.</p>
-                ) : clubVenues.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sellel klubil pole asukohti. Lisa asukoht esmalt klubi lehel.</p>
+                ) : clubCourts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sellel klubil pole väljakuid. Lisa väljak esmalt klubi lehel.</p>
                 ) : (
-                  <Select value={form.venue_id} onValueChange={(v) => setForm({ ...form, venue_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Vali asukoht" /></SelectTrigger>
+                  <Select value={form.court_id} onValueChange={(v) => setForm({ ...form, court_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Vali väljak" /></SelectTrigger>
                     <SelectContent>
-                      {clubVenues.map((v: any) => (
-                        <SelectItem key={v.id} value={v.id}>{v.name} — {v.address}</SelectItem>
+                      {clubCourts.map((c: any) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}{c.address ? ` — ${c.address}` : ""}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -365,15 +365,15 @@ function Inner() {
                 <Input type="datetime-local" value={editForm.registration_deadline} onChange={e => setEditForm({...editForm, registration_deadline: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <Label>Asukoht</Label>
-                {editVenues.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sellel klubil pole asukohti. Lisa asukoht klubi lehel.</p>
+                <Label>Väljak</Label>
+                {editCourts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sellel klubil pole väljakuid. Lisa väljak klubi lehel.</p>
                 ) : (
-                  <Select value={editForm.venue_id} onValueChange={v => setEditForm({...editForm, venue_id: v})}>
-                    <SelectTrigger><SelectValue placeholder="Vali asukoht" /></SelectTrigger>
+                  <Select value={editForm.court_id} onValueChange={v => setEditForm({...editForm, court_id: v})}>
+                    <SelectTrigger><SelectValue placeholder="Vali väljak" /></SelectTrigger>
                     <SelectContent>
-                      {editVenues.map((v: any) => (
-                        <SelectItem key={v.id} value={v.id}>{v.name} — {v.address}</SelectItem>
+                      {editCourts.map((c: any) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}{c.address ? ` — ${c.address}` : ""}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

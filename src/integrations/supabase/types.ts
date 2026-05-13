@@ -169,6 +169,7 @@ export type Database = {
       courts: {
         Row: {
           active: boolean
+          address: string | null
           club_id: string
           created_at: string
           id: string
@@ -178,6 +179,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          address?: string | null
           club_id: string
           created_at?: string
           id?: string
@@ -187,6 +189,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          address?: string | null
           club_id?: string
           created_at?: string
           id?: string
@@ -245,6 +248,7 @@ export type Database = {
           archived_at: string | null
           auto_approve: boolean
           club_id: string
+          court_id: string | null
           created_at: string
           created_by: string
           deleted_at: string | null
@@ -267,6 +271,7 @@ export type Database = {
           archived_at?: string | null
           auto_approve?: boolean
           club_id: string
+          court_id?: string | null
           created_at?: string
           created_by: string
           deleted_at?: string | null
@@ -289,6 +294,7 @@ export type Database = {
           archived_at?: string | null
           auto_approve?: boolean
           club_id?: string
+          court_id?: string | null
           created_at?: string
           created_by?: string
           deleted_at?: string | null
@@ -312,6 +318,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
             referencedColumns: ["id"]
           },
           {
