@@ -32,11 +32,8 @@ function Inner() {
   const [courts, setCourts] = useState<any[]>([]);
   const [isMember, setIsMember] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [courtForm, setCourtForm] = useState({ name: "", surface: "", indoor: false });
+  const [courtForm, setCourtForm] = useState({ name: "", surface: "", indoor: false, address: "" });
   const [presenceMap, setPresenceMap] = useState<Record<string, string>>({});
-  const [venues, setVenues] = useState<any[]>([]);
-  const [venueOpen, setVenueOpen] = useState(false);
-  const [venueForm, setVenueForm] = useState({ name: "", address: "", google_maps_url: "" });
   const [editClubOpen, setEditClubOpen] = useState(false);
   const [editClubForm, setEditClubForm] = useState({ name: "", description: "", location: "" });
 
@@ -45,7 +42,7 @@ function Inner() {
       supabase.from("clubs").select("*").eq("id", clubId).maybeSingle(),
       supabase.from("club_members").select("user_id, role, profiles:user_id(id, full_name, skill_level, is_active)").eq("club_id", clubId),
       supabase.from("events").select("id,title,event_type,starts_at,status").eq("club_id", clubId).order("starts_at", { ascending: true }),
-      supabase.from("courts").select("id,name,surface,indoor").eq("club_id", clubId),
+      supabase.from("courts").select("id,name,surface,indoor,address").eq("club_id", clubId),
     ]);
     setClub(c.data);
     const sorted = (m.data ?? []).sort((a: any, b: any) =>
@@ -68,12 +65,6 @@ function Inner() {
     setIsMember((m.data ?? []).some((mm: any) => mm.user_id === user?.id));
     const me = (m.data ?? []).find((mm: any) => mm.user_id === user?.id);
     setIsAdmin(me?.role === "admin" || me?.role === "organizer" || isSuperAdmin);
-    const { data: vn } = await supabase
-      .from("venues")
-      .select("id, name, address, google_maps_url")
-      .eq("club_id", clubId)
-      .order("name");
-    setVenues(vn ?? []);
   };
   useEffect(() => { load(); }, [clubId, user?.id, isSuperAdmin]);
 
@@ -85,24 +76,15 @@ function Inner() {
 
   const addCourt = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("courts").insert({ club_id: clubId, name: courtForm.name, surface: courtForm.surface || null, indoor: courtForm.indoor });
-    if (error) return toast.error(error.message);
-    setCourtForm({ name: "", surface: "", indoor: false });
-    load();
-  };
-
-  const addVenue = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { error } = await supabase.from("venues").insert({
+    const { error } = await supabase.from("courts").insert({
       club_id: clubId,
-      name: venueForm.name,
-      address: venueForm.address,
-      google_maps_url: venueForm.google_maps_url || null,
+      name: courtForm.name,
+      surface: courtForm.surface || null,
+      indoor: courtForm.indoor,
+      address: courtForm.address || null,
     });
     if (error) return toast.error(error.message);
-    toast.success("Asukoht lisatud");
-    setVenueOpen(false);
-    setVenueForm({ name: "", address: "", google_maps_url: "" });
+    setCourtForm({ name: "", surface: "", indoor: false, address: "" });
     load();
   };
 
@@ -182,7 +164,6 @@ function Inner() {
           <TabsTrigger value="events">{t("clubs.events")}</TabsTrigger>
           <TabsTrigger value="members">{t("clubs.members")}</TabsTrigger>
           <TabsTrigger value="courts">{t("clubs.courts")}</TabsTrigger>
-          <TabsTrigger value="venues">Asukohad ({venues.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="events" className="space-y-2 mt-4">
           {events.length === 0 ? <Empty /> : events.map((e) => (
@@ -218,73 +199,48 @@ function Inner() {
         </TabsContent>
         <TabsContent value="courts" className="space-y-2 mt-4">
           {isAdmin && (
-            <form onSubmit={addCourt} className="flex flex-wrap gap-2 items-end rounded-lg border border-border bg-card p-3">
-              <div className="flex-1 min-w-[140px]">
-                <Input placeholder={t("courts.name")} value={courtForm.name} onChange={(e) => setCourtForm({ ...courtForm, name: e.target.value })} required />
+            <form onSubmit={addCourt} className="space-y-2 rounded-lg border border-border bg-card p-3">
+              <div className="flex flex-wrap gap-2 items-end">
+                <div className="flex-1 min-w-[140px]">
+                  <Input placeholder={t("courts.name")} value={courtForm.name} onChange={(e) => setCourtForm({ ...courtForm, name: e.target.value })} required />
+                </div>
+                <div className="flex-1 min-w-[140px]">
+                  <Input placeholder={t("courts.surface")} value={courtForm.surface} onChange={(e) => setCourtForm({ ...courtForm, surface: e.target.value })} />
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={courtForm.indoor} onCheckedChange={(v) => setCourtForm({ ...courtForm, indoor: !!v })} />
+                  {t("courts.indoor")}
+                </label>
               </div>
-              <div className="flex-1 min-w-[140px]">
-                <Input placeholder={t("courts.surface")} value={courtForm.surface} onChange={(e) => setCourtForm({ ...courtForm, surface: e.target.value })} />
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={courtForm.indoor} onCheckedChange={(v) => setCourtForm({ ...courtForm, indoor: !!v })} />
-                {t("courts.indoor")}
-              </label>
+              <Input
+                placeholder="Aadress (nt. Tammsaare 39, Pärnu)"
+                value={courtForm.address}
+                onChange={(e) => setCourtForm({ ...courtForm, address: e.target.value })}
+              />
               <Button type="submit" size="sm">{t("courts.add")}</Button>
             </form>
           )}
           {courts.length === 0 ? <Empty /> : courts.map((c: any) => (
-            <div key={c.id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between">
-              <span>{c.name}</span>
-              <span className="text-xs text-muted-foreground">{c.surface ?? "—"} · {c.indoor ? "indoor" : "outdoor"}</span>
+            <div key={c.id} className="rounded-lg border border-border bg-card p-3">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{c.name}</span>
+                <span className="text-xs text-muted-foreground">{c.surface ?? "—"} · {c.indoor ? "indoor" : "outdoor"}</span>
+              </div>
+              {c.address && (
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-muted-foreground">{c.address}</span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline flex-shrink-0 ml-2"
+                  >
+                    Vaata kaardil
+                  </a>
+                </div>
+              )}
             </div>
           ))}
-        </TabsContent>
-        <TabsContent value="venues" className="space-y-2 mt-4">
-          {isAdmin && (
-            <Dialog open={venueOpen} onOpenChange={setVenueOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline">+ Lisa asukoht</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Lisa asukoht</DialogTitle></DialogHeader>
-                <form onSubmit={addVenue} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Nimi *</Label>
-                    <Input value={venueForm.name} onChange={(e) => setVenueForm({ ...venueForm, name: e.target.value })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Aadress *</Label>
-                    <Input value={venueForm.address} onChange={(e) => setVenueForm({ ...venueForm, address: e.target.value })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Google Maps link (vabatahtlik)</Label>
-                    <Input value={venueForm.google_maps_url} onChange={(e) => setVenueForm({ ...venueForm, google_maps_url: e.target.value })} />
-                  </div>
-                  <Button type="submit" className="w-full">Lisa asukoht</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          )}
-          {venues.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Asukohti pole lisatud.</p>
-          ) : (
-            venues.map((v: any) => (
-              <div key={v.id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{v.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{v.address}</div>
-                </div>
-                <a
-                  href={v.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.address)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline flex-shrink-0"
-                >
-                  Vaata kaardil
-                </a>
-              </div>
-            ))
-          )}
         </TabsContent>
       </Tabs>
     </div>
