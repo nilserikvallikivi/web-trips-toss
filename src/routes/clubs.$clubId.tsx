@@ -37,6 +37,9 @@ function Inner() {
   const [presenceMap, setPresenceMap] = useState<Record<string, string>>({});
   const [editClubOpen, setEditClubOpen] = useState(false);
   const [editClubForm, setEditClubForm] = useState({ name: "", description: "", location: "" });
+  const [editCourtOpen, setEditCourtOpen] = useState(false);
+  const [editCourtTarget, setEditCourtTarget] = useState<any>(null);
+  const [editCourtForm, setEditCourtForm] = useState({ name: "", surface: "", indoor: false, address: "" });
 
   const load = async () => {
     const [c, m, e, ct] = await Promise.all([
@@ -86,6 +89,29 @@ function Inner() {
     });
     if (error) return toast.error(error.message);
     setCourtForm({ name: "", surface: "", indoor: false, address: "" });
+    load();
+  };
+
+  const updateCourt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editCourtTarget) return;
+    const { error } = await supabase.from("courts").update({
+      name: editCourtForm.name,
+      surface: editCourtForm.surface || null,
+      indoor: editCourtForm.indoor,
+      address: editCourtForm.address || null,
+    }).eq("id", editCourtTarget.id);
+    if (error) return toast.error(error.message);
+    toast.success("Väljak uuendatud");
+    setEditCourtOpen(false);
+    load();
+  };
+
+  const deleteCourt = async (id: string) => {
+    if (!confirm("Kustuta väljak?")) return;
+    const { error } = await supabase.from("courts").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Väljak kustutatud");
     load();
   };
 
@@ -233,7 +259,21 @@ function Inner() {
             <div key={c.id} className="rounded-lg border border-border bg-card p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{c.name}</span>
-                <span className="text-xs text-muted-foreground">{c.surface ?? "—"} · {c.indoor ? "indoor" : "outdoor"}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">{c.surface ?? "—"} · {c.indoor ? "indoor" : "outdoor"}</span>
+                  {isAdmin && (
+                    <button
+                      onClick={() => { setEditCourtTarget(c); setEditCourtForm({ name: c.name, surface: c.surface ?? "", indoor: c.indoor ?? false, address: c.address ?? "" }); setEditCourtOpen(true); }}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >Muuda</button>
+                  )}
+                  {isAdmin && (
+                    <button
+                      onClick={() => deleteCourt(c.id)}
+                      className="text-xs text-destructive hover:opacity-80 transition-opacity"
+                    >Kustuta</button>
+                  )}
+                </div>
               </div>
               {c.address && (
                 <div className="flex items-center justify-between mt-1">
@@ -252,6 +292,41 @@ function Inner() {
           ))}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={editCourtOpen} onOpenChange={setEditCourtOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Muuda väljakut</DialogTitle></DialogHeader>
+          {editCourtTarget && (
+            <form onSubmit={updateCourt} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nimi</Label>
+                <Input value={editCourtForm.name} onChange={(e) => setEditCourtForm({ ...editCourtForm, name: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Surface</Label>
+                <Select value={editCourtForm.surface} onValueChange={(v) => setEditCourtForm({ ...editCourtForm, surface: v })}>
+                  <SelectTrigger><SelectValue placeholder="Surface" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Hard">Hard</SelectItem>
+                    <SelectItem value="Clay">Clay</SelectItem>
+                    <SelectItem value="Grass">Grass</SelectItem>
+                    <SelectItem value="Carpet">Carpet</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Aadress</Label>
+                <Input value={editCourtForm.address} onChange={(e) => setEditCourtForm({ ...editCourtForm, address: e.target.value })} placeholder="nt. Tammsaare 39, Pärnu" />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={editCourtForm.indoor} onCheckedChange={(v) => setEditCourtForm({ ...editCourtForm, indoor: !!v })} />
+                {t("courts.indoor")}
+              </label>
+              <Button type="submit" className="w-full">Salvesta</Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
