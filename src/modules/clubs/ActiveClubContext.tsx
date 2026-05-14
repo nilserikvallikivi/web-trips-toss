@@ -39,11 +39,11 @@ export function ActiveClubProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const { data } = await supabase
       .from("club_members")
-      .select("role, clubs:club_id(id, name)")
+      .select("role, clubs:club_id(id, name, deleted_at)")
       .eq("user_id", user.id);
     const refs: ClubRef[] = (data ?? [])
-      .map((r: any) => r.clubs ? { id: r.clubs.id, name: r.clubs.name, role: r.role } : null)
-      .filter(Boolean) as ClubRef[];
+      .filter((r: any) => r.clubs && !r.clubs.deleted_at)
+      .map((r: any) => ({ id: r.clubs.id, name: r.clubs.name, role: r.role }));
     setClubs(refs);
     const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
     const initial = (stored && refs.find((r) => r.id === stored)?.id) || refs[0]?.id || null;
