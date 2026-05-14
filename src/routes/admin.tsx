@@ -155,7 +155,7 @@ function UsersTab() {
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("club_members").select("user_id, club_id, role"),
-      supabase.from("clubs").select("id, name"),
+      supabase.from("clubs").select("id, name").is("deleted_at", null),
     ]);
     setProfiles((p ?? []) as any);
     setRoles((r ?? []) as any);
