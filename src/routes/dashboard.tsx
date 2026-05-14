@@ -25,7 +25,7 @@ function Inner() {
     if (!user) return;
     (async () => {
       const [c, r, m] = await Promise.all([
-        supabase.from("club_members").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("club_members").select("id, clubs!inner(deleted_at)", { count: "exact", head: true }).eq("user_id", user.id).is("clubs.deleted_at", null),
         supabase.from("event_registrations").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("matches").select("id", { count: "exact", head: true }).or(`player1_id.eq.${user.id},player2_id.eq.${user.id},player3_id.eq.${user.id},player4_id.eq.${user.id}`),
       ]);
