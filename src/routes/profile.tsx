@@ -27,7 +27,7 @@ function Inner() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("id,full_name,phone,gender,skill_level,dominant_hand,is_active").eq("id", user.id).maybeSingle();
       if (data) setForm({
         full_name: data.full_name ?? "",
         phone: data.phone ?? "",
