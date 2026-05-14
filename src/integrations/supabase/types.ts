@@ -913,6 +913,7 @@ export type Database = {
       }
       presence_heartbeat: { Args: never; Returns: undefined }
       presence_set_offline: { Args: never; Returns: undefined }
+      profile_phone_visible: { Args: { _profile_id: string }; Returns: boolean }
       user_has_history: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
