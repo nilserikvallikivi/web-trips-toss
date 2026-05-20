@@ -228,8 +228,20 @@ function Inner() {
                 <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["singles_tournament","doubles_tournament","mixed_doubles","league","ladder","round_robin","knockout","casual","training","rotating_doubles","custom"].map((x) => (
-                      <SelectItem key={x} value={x}>{x.replaceAll("_", " ")}</SelectItem>
+                    {[
+                      { value: "singles_tournament", label: "Üksik turniir" },
+                      { value: "doubles_tournament", label: "Paarismäng turniir" },
+                      { value: "mixed_doubles", label: "Segapaarismäng" },
+                      { value: "league", label: "Liiga" },
+                      { value: "ladder", label: "Redel" },
+                      { value: "round_robin", label: "Kõik kõigi vastu" },
+                      { value: "knockout", label: "Väljalangemisturniir" },
+                      { value: "casual", label: "Vaba mäng" },
+                      { value: "training", label: "Treening" },
+                      { value: "rotating_doubles", label: "Rotatsioonpaarismäng" },
+                      { value: "custom", label: "Kohandatud" },
+                    ].map((x) => (
+                      <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -309,7 +321,19 @@ function Inner() {
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
                   <Link to="/clubs/$clubId" params={{ clubId: e.club_id }} className="hover:underline" onClick={ev => ev.stopPropagation()}>{e.clubs?.name}</Link>
-                  {" · "}{e.event_type}{" · "}{formatDate(e.starts_at)}
+                  {" · "}{{
+                    singles_tournament: "Üksik turniir",
+                    doubles_tournament: "Paarismäng turniir",
+                    mixed_doubles: "Segapaarismäng",
+                    league: "Liiga",
+                    ladder: "Redel",
+                    round_robin: "Kõik kõigi vastu",
+                    knockout: "Väljalangemisturniir",
+                    casual: "Vaba mäng",
+                    training: "Treening",
+                    rotating_doubles: "Rotatsioonpaarismäng",
+                    custom: "Kohandatud",
+                  }[e.event_type as string] ?? e.event_type}{" · "}{formatDate(e.starts_at)}
                   {" · "}{counts[e.id] ?? 0} {t("events.registeredCount")}
                 </div>
               </div>
@@ -339,12 +363,24 @@ function Inner() {
                 <Input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} required />
               </div>
               <div className="space-y-2">
-                <Label>{t("events.type")}</Label>
+                <Label>Ürituse tüüp</Label>
                 <Select value={editForm.event_type} onValueChange={v => setEditForm({...editForm, event_type: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["singles_tournament","doubles_tournament","mixed_doubles","league","ladder","round_robin","knockout","casual","training","rotating_doubles","custom"].map((x) => (
-                      <SelectItem key={x} value={x}>{x.replaceAll("_", " ")}</SelectItem>
+                    {[
+                      { value: "singles_tournament", label: "Üksik turniir" },
+                      { value: "doubles_tournament", label: "Paarismäng turniir" },
+                      { value: "mixed_doubles", label: "Segapaarismäng" },
+                      { value: "league", label: "Liiga" },
+                      { value: "ladder", label: "Redel" },
+                      { value: "round_robin", label: "Kõik kõigi vastu" },
+                      { value: "knockout", label: "Väljalangemisturniir" },
+                      { value: "casual", label: "Vaba mäng" },
+                      { value: "training", label: "Treening" },
+                      { value: "rotating_doubles", label: "Rotatsioonpaarismäng" },
+                      { value: "custom", label: "Kohandatud" },
+                    ].map((x) => (
+                      <SelectItem key={x.value} value={x.value}>{x.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -398,8 +434,16 @@ function Inner() {
                 <Select value={editForm.status} onValueChange={v => setEditForm({...editForm, status: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["draft","published","registration_open","registration_closed","in_progress","completed","cancelled"].map(s => (
-                      <SelectItem key={s} value={s}>{s.replaceAll("_"," ")}</SelectItem>
+                    {[
+                      { value: "draft", label: "Mustand" },
+                      { value: "published", label: "Avaldatud" },
+                      { value: "registration_open", label: "Registreerimine avatud" },
+                      { value: "registration_closed", label: "Registreerimine suletud" },
+                      { value: "in_progress", label: "Toimub" },
+                      { value: "completed", label: "Lõppenud" },
+                      { value: "cancelled", label: "Tühistatud" },
+                    ].map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
