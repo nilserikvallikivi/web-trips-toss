@@ -102,12 +102,16 @@ function AdminConsole() {
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="audit">Audit Log</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="mt-4">
           <UsersTab />
         </TabsContent>
         <TabsContent value="audit" className="mt-4">
           <AuditTab />
+        </TabsContent>
+        <TabsContent value="reports" className="mt-4">
+          <ReportsEmbed />
         </TabsContent>
       </Tabs>
     </div>
@@ -615,5 +619,21 @@ function AuditTab() {
         </table>
       </div>
     </Card>
+  );
+}
+
+function ReportsEmbed() {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Reports are available at the dedicated reports page.
+      </p>
+      <a
+        href="/reports"
+        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+      >
+        Open Reports
+      </a>
+    </div>
   );
 }
