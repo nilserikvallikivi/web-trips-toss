@@ -45,7 +45,7 @@ function Inner() {
     const [c, m, e, ct] = await Promise.all([
       supabase.from("clubs").select("*").eq("id", clubId).maybeSingle(),
       supabase.from("club_members").select("user_id, role, profiles:user_id(id, full_name, skill_level, is_active)").eq("club_id", clubId),
-      supabase.from("events").select("id,title,event_type,starts_at,status").eq("club_id", clubId).order("starts_at", { ascending: true }),
+      supabase.from("events").select("id,title,event_type,starts_at,status,court_id,courts:court_id(name,address)").eq("club_id", clubId).order("starts_at", { ascending: true }),
       supabase.from("courts").select("id,name,surface,indoor,address").eq("club_id", clubId),
     ]);
     setClub(c.data);
@@ -196,7 +196,10 @@ function Inner() {
           {events.length === 0 ? <Empty /> : events.map((e) => (
             <Link key={e.id} to="/events" className="block rounded-lg border border-border bg-card p-4 hover:bg-accent">
               <div className="font-medium">{e.title}</div>
-              <div className="text-xs text-muted-foreground">{e.event_type} · {e.status}</div>
+              <div className="text-xs text-muted-foreground">
+                {e.event_type} · {e.status}
+                {e.courts?.name && <span> · 📍 {e.courts.name}{e.courts.address ? `, ${e.courts.address}` : ""}</span>}
+              </div>
             </Link>
           ))}
         </TabsContent>
