@@ -61,7 +61,7 @@ function Inner() {
   const [editCourts, setEditCourts] = useState<any[]>([]);
 
   const load = async () => {
-    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id,created_by,recurrence,court_id, clubs:club_id(name)").order("starts_at", { ascending: true });
+    const { data: ev } = await supabase.from("events").select("id,title,event_type,starts_at,registration_deadline,status,club_id,created_by,recurrence,court_id, clubs:club_id(name), courts:court_id(name,address)").order("starts_at", { ascending: true });
     setEvents(ev ?? []);
     const { data: allRegs } = await supabase.from("event_registrations").select("event_id");
     const c: Record<string, number> = {};
@@ -335,6 +335,7 @@ function Inner() {
                     custom: "Kohandatud",
                   }[e.event_type as string] ?? e.event_type}{" · "}{formatDate(e.starts_at)}
                   {" · "}{counts[e.id] ?? 0} {t("events.registeredCount")}
+                  {e.courts?.name && <span> · 📍 {e.courts.name}{e.courts.address ? `, ${e.courts.address}` : ""}</span>}
                 </div>
               </div>
               {!isPast(e) && (
